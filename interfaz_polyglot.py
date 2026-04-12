@@ -157,42 +157,93 @@ with col1:
     st.markdown("### 🎯 Mercado objetivo")
     st.markdown("Selecciona el país para la campaña")
     
-    # Usar emojis de banderas (funcionan en st.radio)
-    mercado_opciones = {
-        "🇧🇷 Brasil": "brasil",
-        "🇯🇵 Japón": "japon",
-        "🇩🇪 Alemania": "alemania"
-    }
+    # Usamos columnas dentro de la opción para alinear bandera y texto
+    # Opción 1: Brasil
+    row1 = st.container()
+    with row1:
+        c1, c2 = st.columns([1, 10])
+        with c1:
+            st.image("https://flagpedia.net/data/flags/icon/72x54/br.png", width=24)
+        with c2:
+            if st.button("Brasil", key="br_opt", use_container_width=True):
+                st.session_state.mercado = "brasil"
     
-    mercado_seleccionado = st.radio(
-        "Mercado",
-        options=list(mercado_opciones.keys()),
-        index=1,  # Japón seleccionado por defecto
-        label_visibility="collapsed"
-    )
-    mercado = mercado_opciones[mercado_seleccionado]
+    # Opción 2: Japón (con borde negro en la bandera)
+    row2 = st.container()
+    with row2:
+        c1, c2 = st.columns([1, 10])
+        with c1:
+            st.image("https://flagpedia.net/data/flags/icon/72x54/jp.png", width=24)
+        with c2:
+            if st.button("Japón", key="jp_opt", use_container_width=True):
+                st.session_state.mercado = "japon"
     
+    # Opción 3: Alemania
+    row3 = st.container()
+    with row3:
+        c1, c2 = st.columns([1, 10])
+        with c1:
+            st.image("https://flagpedia.net/data/flags/icon/72x54/de.png", width=24)
+        with c2:
+            if st.button("Alemania", key="de_opt", use_container_width=True):
+                st.session_state.mercado = "alemania"
+    
+    # Valor por defecto
+    if "mercado" not in st.session_state:
+        st.session_state.mercado = "japon"
+    
+    mercado = st.session_state.mercado
+
 with col2:
     st.markdown("### 🤖 Motor de generación")
     st.markdown("Selecciona qué IA generará tu contenido")
     
-    # Opciones de LLM con íconos distintivos
-    llm_opciones = {
-        "🤖 Gemini (Google)": "gemini",
-        "🔍 Deepseek (DeepSeek)": "deepseek",
-        "🌊 Mistral (Mistral AI)": "mistral",
-        "🏆 Todos (Comparar)": "todos"
-    }
+    # Opción 1: Gemini
+    row1 = st.container()
+    with row1:
+        c1, c2 = st.columns([1, 10])
+        with c1:
+            st.image("https://unpkg.com/@lobehub/icons-static-svg@latest/icons/gemini.svg", width=24)
+        with c2:
+            if st.button("Gemini (Google)", key="gemini_opt", use_container_width=True):
+                st.session_state.llm = "gemini"
     
-    llm_seleccionado = st.radio(
-        "LLM",
-        options=list(llm_opciones.keys()),
-        index=0,  # Gemini seleccionado por defecto
-        label_visibility="collapsed",
-        format_func=lambda x: x
-    )
-    llm = llm_opciones[llm_seleccionado]
-
+    # Opción 2: Deepseek
+    row2 = st.container()
+    with row2:
+        c1, c2 = st.columns([1, 10])
+        with c1:
+            st.image("https://unpkg.com/@lobehub/icons-static-svg@latest/icons/deepseek.svg", width=24)
+        with c2:
+            if st.button("Deepseek (DeepSeek)", key="deepseek_opt", use_container_width=True):
+                st.session_state.llm = "deepseek"
+    
+    # Opción 3: Mistral
+    row3 = st.container()
+    with row3:
+        c1, c2 = st.columns([1, 10])
+        with c1:
+            st.image("https://unpkg.com/@lobehub/icons-static-svg@latest/icons/mistral.svg", width=24)
+        with c2:
+            if st.button("Mistral (Mistral AI)", key="mistral_opt", use_container_width=True):
+                st.session_state.llm = "mistral"
+    
+    # Opción 4: Todos (Comparar)
+    row4 = st.container()
+    with row4:
+        c1, c2 = st.columns([1, 10])
+        with c1:
+            st.markdown("🏆")  # Trofeo como ícono de comparación
+        with c2:
+            if st.button("Todos (Comparar)", key="todos_opt", use_container_width=True):
+                st.session_state.llm = "todos"
+    
+    # Valor por defecto
+    if "llm" not in st.session_state:
+        st.session_state.llm = "gemini"
+    
+    llm = st.session_state.llm
+    
 # ==================== BOTÓN DE GENERACIÓN ====================
 col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
 with col_btn2:
