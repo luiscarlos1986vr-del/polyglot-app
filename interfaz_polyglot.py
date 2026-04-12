@@ -136,7 +136,7 @@ st.markdown("""
 # ==================== HEADER CON EMPRESA ====================
 st.markdown('<p class="main-title">🌍 Polyglot</p>', unsafe_allow_html=True)
 st.markdown('<p class="company-name">⚡ Global-Gadgets ⚡</p>', unsafe_allow_html=True)
-st.markdown('<p class="subtitle">Convierte tu producto en ventas globales 🏆<br>Contenido optimizado para Japón 🇯🇵 | Alemania 🇩🇪 | Brasil 🇧🇷</p>', unsafe_allow_html=True)
+st.markdown('<p class="subtitle">Convierte tu producto en ventas globales 🏆<br>Campaña de Marketing para Japón | Alemania | Brasil</p>', unsafe_allow_html=True)
 
 # ==================== ENTRADA DEL PRODUCTO ====================
 with st.container():
