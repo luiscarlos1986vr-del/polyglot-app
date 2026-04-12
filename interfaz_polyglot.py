@@ -157,20 +157,18 @@ with col1:
     st.markdown("### 🎯 Mercado objetivo")
     st.markdown("Selecciona el país para la campaña")
     
-    # Opciones con imágenes (funciona en Streamlit 1.30+)
+    # Opciones de mercado con banderas (emojis)
     mercado_opciones = {
-        "Brasil": "brasil",
-        "Japão": "japon", 
-        "Alemanha": "alemania"
+        "🇧🇷 Brasil": "brasil",
+        "🇯🇵 Japón": "japon",
+        "🇩🇪 Alemania": "alemania"
     }
     
-    # Mostrar radio con formato personalizado
     mercado_seleccionado = st.radio(
         "Mercado",
         options=list(mercado_opciones.keys()),
-        index=1,
-        label_visibility="collapsed",
-        format_func=lambda x: f"🇧🇷 {x}" if x == "Brasil" else f"🇯🇵 {x}" if x == "Japão" else f"🇩🇪 {x}"
+        index=1,  # Japón seleccionado por defecto
+        label_visibility="collapsed"
     )
     mercado = mercado_opciones[mercado_seleccionado]
 
@@ -178,6 +176,7 @@ with col2:
     st.markdown("### 🤖 Motor de generación")
     st.markdown("Selecciona qué IA generará tu contenido")
     
+    # Opciones de LLM con nombres claros
     llm_opciones = {
         "Gemini (Google)": "gemini",
         "Deepseek (DeepSeek)": "deepseek",
@@ -188,7 +187,7 @@ with col2:
     llm_seleccionado = st.radio(
         "LLM",
         options=list(llm_opciones.keys()),
-        index=0,
+        index=0,  # Gemini seleccionado por defecto
         label_visibility="collapsed"
     )
     llm = llm_opciones[llm_seleccionado]
