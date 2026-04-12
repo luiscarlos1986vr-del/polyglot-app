@@ -4,7 +4,7 @@ import requests
 
 # Configuración de la API (tu servidor)
 #API_URL = "http://localhost:5000"
-API_URL = "https://polyglot-api.onrender.com"
+API_URL = "https://polyglot-app-5crh.onrender.com"
 st.set_page_config(page_title="Polyglot", page_icon="🌍")
 st.title("🌍 Polyglot - Marketing Multilingüe")
 st.markdown("Genera contenido localizado para Japón, Alemania y Brasil")
