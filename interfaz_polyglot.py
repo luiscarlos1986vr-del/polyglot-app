@@ -1,11 +1,9 @@
-# interfaz_polyglot.py - VERSIÓN MEJORADA CON BANDERAS E ÍCONOS
+# interfaz_polyglot.py - VERSIÓN DEFINITIVA CON ÍCONOS OFICIALES
 # Requisito 4: Comparación y selección entre LLMs
 import streamlit as st
 import requests
 
 # ==================== CONFIGURACIÓN ====================
-# IMPORTANTE: Cambia esta URL cuando esté en Render
-#API_URL = "http://localhost:5000"
 API_URL = "https://polyglot-app-5crh.onrender.com"
 
 st.set_page_config(
@@ -46,11 +44,6 @@ st.markdown("""
         margin-bottom: 0.5rem;
     }
     /* Tarjetas de comparación */
-    .comparison-container {
-        display: flex;
-        gap: 1rem;
-        margin-top: 1rem;
-    }
     .llm-card {
         background: linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%);
         border-radius: 16px;
@@ -91,20 +84,6 @@ st.markdown("""
         color: #888;
         margin-bottom: 1rem;
     }
-    .flag-icon {
-        font-size: 1.5rem;
-        margin-right: 8px;
-        vertical-align: middle;
-    }
-    .market-option {
-        padding: 8px 12px;
-        border-radius: 10px;
-        margin: 5px 0;
-        transition: background 0.2s;
-    }
-    .market-option:hover {
-        background: #2a2a3e;
-    }
     .footer {
         text-align: center;
         margin-top: 3rem;
@@ -113,7 +92,7 @@ st.markdown("""
         font-size: 0.8rem;
         border-top: 0.5px solid #444;
     }
-    /* Botón personalizado */
+    /* Botón principal */
     .stButton > button {
         background: linear-gradient(90deg, #1a6b8a, #2a9d6e);
         color: white;
@@ -129,6 +108,24 @@ st.markdown("""
         background: linear-gradient(90deg, #1e7a9e, #35b87a);
         color: white;
         box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    /* Estilo para las etiquetas de los radio buttons con íconos */
+    div[role="radiogroup"] label {
+        margin: 5px 0;
+        padding: 8px;
+        border-radius: 8px;
+        transition: background-color 0.2s;
+    }
+    div[role="radiogroup"] label:hover {
+        background-color: #2a2a3e;
+    }
+    .llm-radio-icon {
+        width: 20px;
+        height: 20px;
+        vertical-align: middle;
+        margin-right: 8px;
+        margin-top: -3px;
+        filter: brightness(0) invert(1); /* Esto los vuelve blancos */
     }
 </style>
 """, unsafe_allow_html=True)
@@ -167,7 +164,7 @@ with col1:
     mercado_seleccionado = st.radio(
         "Mercado",
         options=list(mercado_opciones.keys()),
-        index=1,  # Japón seleccionado por defecto
+        index=1,
         label_visibility="collapsed"
     )
     mercado = mercado_opciones[mercado_seleccionado]
@@ -176,52 +173,47 @@ with col2:
     st.markdown("### 🤖 Motor de generación")
     st.markdown("Selecciona qué IA generará tu contenido")
     
-    # Opción Gemini
-    c1, c2 = st.columns([1, 10])
-    with c1:
-        st.image("https://unpkg.com/@lobehub/icons-static-svg@latest/icons/gemini.svg", width=24)
-    with c2:
-        if st.button("Gemini (Google)", key="gem_btn", use_container_width=True):
-            st.session_state.llm = "gemini"
+    # Diccionario de opciones y sus íconos oficiales (monocromáticos)
+    llm_opciones_con_iconos = {
+        "Gemini (Google)": "https://unpkg.com/@lobehub/icons-static-svg@latest/icons/gemini.svg",
+        "Deepseek (DeepSeek)": "https://unpkg.com/@lobehub/icons-static-svg@latest/icons/deepseek.svg",
+        "Mistral (Mistral AI)": "https://unpkg.com/@lobehub/icons-static-svg@latest/icons/mistral.svg",
+        "Todos (Comparar)": "trophy" # Usaremos un emoji para este
+    }
     
-    # Opción Deepseek
-    c1, c2 = st.columns([1, 10])
-    with c1:
-        st.image("https://unpkg.com/@lobehub/icons-static-svg@latest/icons/deepseek.svg", width=24)
-    with c2:
-        if st.button("Deepseek (DeepSeek)", key="deep_btn", use_container_width=True):
-            st.session_state.llm = "deepseek"
+    # Función para mostrar el radio button con el ícono oficial
+    def formatear_opcion_llm(opcion_texto):
+        icono_url = llm_opciones_con_iconos.get(opcion_texto)
+        if icono_url == "trophy":
+            return f"🏆 {opcion_texto}"
+        return f'<img src="{icono_url}" class="llm-radio-icon"> {opcion_texto}'
     
-    # Opción Mistral
-    c1, c2 = st.columns([1, 10])
-    with c1:
-        st.image("https://unpkg.com/@lobehub/icons-static-svg@latest/icons/mistral.svg", width=24)
-    with c2:
-        if st.button("Mistral (Mistral AI)", key="mist_btn", use_container_width=True):
-            st.session_state.llm = "mistral"
+    llm_seleccionado = st.radio(
+        "LLM",
+        options=list(llm_opciones_con_iconos.keys()),
+        index=0,
+        label_visibility="collapsed",
+        format_func=formatear_opcion_llm
+    )
     
-    # Opción Todos
-    c1, c2 = st.columns([1, 10])
-    with c1:
-        st.markdown("🏆")
-    with c2:
-        if st.button("Todos (Comparar)", key="all_btn", use_container_width=True):
-            st.session_state.llm = "todos"
-    
-    # Valor por defecto
-    if "llm" not in st.session_state:
-        st.session_state.llm = "gemini"
-    
-    llm = st.session_state.llm
-    
+    # Mapeo del texto seleccionado al valor interno
+    llm_map = {
+        "Gemini (Google)": "gemini",
+        "Deepseek (DeepSeek)": "deepseek",
+        "Mistral (Mistral AI)": "mistral",
+        "Todos (Comparar)": "todos"
+    }
+    llm = llm_map[llm_seleccionado]
+
 # ==================== BOTÓN DE GENERACIÓN ====================
 col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
 with col_btn2:
     generar = st.button("✨ Generar campaña internacional ✨", type="primary", use_container_width=True)
 
+
 # ==================== FUNCIONES DE VISUALIZACIÓN ====================
 
-def mostrar_comparacion(resultado):
+def mostrar_comparacion(resultado, mercado_seleccionado_nombre):
     """Muestra los resultados de los 3 LLMs lado a lado para comparar"""
     
     st.markdown("---")
@@ -234,7 +226,6 @@ def mostrar_comparacion(resultado):
     
     posts = resultado["contenido"]["post"]
     
-    # Íconos para cada LLM
     llm_iconos = {
         "Deepseek": "🔍",
         "Mistral": "🌊",
@@ -277,7 +268,7 @@ def mostrar_comparacion(resultado):
                 
                 if st.button(f"✅ Seleccionar {llm_nombre}", key=f"select_{llm_nombre}", use_container_width=True):
                     st.session_state.seleccionado = llm_nombre
-                    st.success(f"🎉 ¡Has seleccionado **{llm_nombre}** para la campaña de {mercado_seleccionado}!")
+                    st.success(f"🎉 ¡Has seleccionado **{llm_nombre}** para la campaña de {mercado_seleccionado_nombre}!")
                     st.balloons()
                     st.rerun()
                 
@@ -292,20 +283,11 @@ def mostrar_comparacion(resultado):
                 st.markdown('</div>', unsafe_allow_html=True)
     
     if st.session_state.seleccionado:
-        st.success(f"📌 **Campaña confirmada con {st.session_state.seleccionado} para {mercado_seleccionado}**")
+        st.success(f"📌 **Campaña confirmada con {st.session_state.seleccionado} para {mercado_seleccionado_nombre}**")
 
-def mostrar_resultados_normales(resultado, llm_usado):
+def mostrar_resultados_normales(resultado, llm_usado_texto):
     """Muestra los resultados en pestañas (modo normal)"""
-    
-    # Ícono para el LLM seleccionado
-    llm_iconos = {
-        "gemini": "🤖",
-        "deepseek": "🔍",
-        "mistral": "🌊"
-    }
-    icono = llm_iconos.get(llm_usado, "🤖")
-    
-    st.markdown(f"### {icono} Resultados generados por {llm_seleccionado}")
+    st.markdown(f"### Resultados generados por {llm_usado_texto}")
     
     tab1, tab2, tab3 = st.tabs(["📱 Redes Sociales", "📧 Email Promocional", "🎯 Eslogans"])
     
@@ -336,7 +318,9 @@ if generar:
     if not descripcion:
         st.error("❌ Por favor, describe tu producto para empezar")
     else:
-        with st.spinner(f"🚀 Generando contenido para {mercado_seleccionado} con {llm_seleccionado}..."):
+        mercado_nombre_para_mostrar = mercado_seleccionado.replace("🇧🇷 ", "").replace("🇯🇵 ", "").replace("🇩🇪 ", "")
+        
+        with st.spinner(f"🚀 Generando contenido para {mercado_nombre_para_mostrar} con {llm_seleccionado}..."):
             try:
                 response = requests.post(
                     f"{API_URL}/generar",
@@ -352,21 +336,21 @@ if generar:
                     resultado = response.json()
                     
                     if resultado.get("exito"):
-                        st.success(f"✅ ¡Campaña generada exitosamente para {mercado_seleccionado}!")
+                        st.success(f"✅ ¡Campaña generada exitosamente para {mercado_nombre_para_mostrar}!")
                         
                         if llm == "todos":
-                            mostrar_comparacion(resultado)
+                            mostrar_comparacion(resultado, mercado_nombre_para_mostrar)
                         else:
-                            mostrar_resultados_normales(resultado, llm)
+                            mostrar_resultados_normales(resultado, llm_seleccionado)
                     else:
                         st.error(f"❌ Error: {resultado.get('error')}")
                 else:
                     st.error(f"❌ Error de conexión: {response.status_code}")
                     
             except requests.exceptions.ConnectionError:
-                st.error("❌ No se pudo conectar al servidor. ¿Ejecutaste 'python api.py'?")
+                st.error("❌ No se pudo conectar al servidor. Asegúrate de que el backend esté corriendo.")
             except Exception as e:
-                st.error(f"❌ Error: {str(e)}")
+                st.error(f"❌ Error inesperado: {str(e)}")
 
 # ==================== PIE DE PÁGINA ====================
 st.markdown("---")
