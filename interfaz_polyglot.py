@@ -21,7 +21,7 @@ st.markdown("""
     .main-title {
         text-align: center;
         font-size: 9rem;
-        background: linear-gradient(90deg, #00a6ff, #92FE9D);
+        background: linear-gradient(50deg, #00a6ff, #92FE9D);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         margin-bottom: 0;
