@@ -27,7 +27,7 @@ st.markdown("""
     .company-name {
         text-align: center;
         font-size: 1.2rem;
-        color: #FFD700;
+        color: #e88710;
         letter-spacing: 2px;
         margin-top: -10px;
         margin-bottom: 5px;
@@ -40,10 +40,10 @@ st.markdown("""
     /* Tarjeta de producto */
     .product-card {
         background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-        padding: 1rem;
+        padding: 0.5rem;
         border-radius: 20px;
         border: 1px solid #333;
-        margin-bottom: 1rem;
+        margin-bottom: 0.5rem;
     }
     /* Tarjetas de comparación */
     .comparison-container {
