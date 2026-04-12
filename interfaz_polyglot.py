@@ -20,10 +20,8 @@ st.markdown("""
     /* Título principal */
     .main-title {
         text-align: center;
-        font-size: 9rem;
-        background: linear-gradient(50deg, #00a6ff, #92FE9D);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        font-size: 5rem;
+        color: #6b9bc2;
         margin-bottom: 0;
     }
     .company-name {
@@ -110,7 +108,7 @@ st.markdown("""
     .footer {
         text-align: center;
         margin-top: 3rem;
-        padding: 1rem;
+        padding: 0.5rem;
         color: #888;
         font-size: 0.8rem;
         border-top: 0.5px solid #444;
