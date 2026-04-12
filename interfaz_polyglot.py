@@ -134,8 +134,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==================== HEADER CON EMPRESA ====================
-st.markdown('<p class="main-title">🌍 Polyglot</p>', unsafe_allow_html=True)
-st.markdown('<p class="company-name">⚡ Global-Gadgets ⚡</p>', unsafe_allow_html=True)
+st.markdown('<p class="main-title">⚡ Global-Gadgets ⚡</p>', unsafe_allow_html=True)
+st.markdown('<p class="company-name">🌍 Polyglot</p>', unsafe_allow_html=True)
 st.markdown('<p class="subtitle">Convierte tu producto en ventas globales 🏆<br>Campaña de Marketing para Japón | Alemania | Brasil</p>', unsafe_allow_html=True)
 
 # ==================== ENTRADA DEL PRODUCTO ====================
