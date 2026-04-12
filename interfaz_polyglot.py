@@ -115,18 +115,20 @@ st.markdown("""
     }
     /* Botón personalizado */
     .stButton > button {
-        background: linear-gradient(90deg, #00C9FF, #92FE9D);
-        color: #000;
+        background: linear-gradient(90deg, #1a6b8a, #2a9d6e);
+        color: white;
         font-weight: bold;
         border: none;
         padding: 0.75rem 2rem;
         border-radius: 30px;
         transition: transform 0.2s;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
     .stButton > button:hover {
         transform: scale(1.02);
-        background: linear-gradient(90deg, #00C9FF, #92FE9D);
-        color: #000;
+        background: linear-gradient(90deg, #1e7a9e, #35b87a);
+        color: white;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -157,17 +159,17 @@ with col1:
     
     # Opciones de mercado con banderas
     mercado_opciones = {
-        "🇧🇷 Brasil": "brasil",
-        "🇯🇵 Japón": "japon",
-        "🇩🇪 Alemania": "alemania"
+        '<img src="https://flagcdn.com/br.svg" width="20" style="margin-right: 5px;"> Brasil': "brasil",
+        '<img src="https://flagcdn.com/jp.svg" width="20" style="margin-right: 5px;"> Japón': "japon",
+        '<img src="https://flagcdn.com/de.svg" width="20" style="margin-right: 5px;"> Alemania': "alemania",
     }
     
     mercado_seleccionado = st.radio(
         "Mercado",
         options=list(mercado_opciones.keys()),
-        index=1,  # Japón seleccionado por defecto
+        index=0,  # Japón seleccionado por defecto
         label_visibility="collapsed",
-        format_func=lambda x: x  # Mostrar el texto con bandera
+        
     )
     mercado = mercado_opciones[mercado_seleccionado]
 
