@@ -20,8 +20,8 @@ st.markdown("""
     /* Título principal */
     .main-title {
         text-align: center;
-        font-size: 3rem;
-        background: linear-gradient(90deg, #00C9FF, #92FE9D);
+        font-size: 9rem;
+        background: linear-gradient(90deg, #00a6ff, #92FE9D);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         margin-bottom: 0;
@@ -134,8 +134,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==================== HEADER CON EMPRESA ====================
-st.markdown('<p class="main-title">⚡ Global-Gadgets ⚡</p>', unsafe_allow_html=True)
-st.markdown('<p class="company-name">🌍 Polyglot</p>', unsafe_allow_html=True)
+st.markdown('<p class="main-title">🌍 Polyglot</p>', unsafe_allow_html=True)
+st.markdown('<p class="company-name">⚡ Global-Gadgets ⚡</p>', unsafe_allow_html=True)
 st.markdown('<p class="subtitle">Convierte tu producto en ventas globales 🏆<br>Campaña de Marketing para Japón | Alemania | Brasil</p>', unsafe_allow_html=True)
 
 # ==================== ENTRADA DEL PRODUCTO ====================
