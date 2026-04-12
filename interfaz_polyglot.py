@@ -157,22 +157,35 @@ with col1:
     st.markdown("### 🎯 Mercado objetivo")
     st.markdown("Selecciona el país para la campaña")
     
-    # Opciones de mercado con banderas
-    mercado_opciones = {
-        '<img src="https://flagcdn.com/br.svg" width="20" style="margin-right: 5px;"> Brasil': "brasil",
-        '<img src="https://flagcdn.com/jp.svg" width="20" style="margin-right: 5px;"> Japón': "japon",
-        '<img src="https://flagcdn.com/de.svg" width="20" style="margin-right: 5px;"> Alemania': "alemania",
-    }
+    # Crear 3 columnas para las banderas
+    col_br, col_jp, col_de = st.columns(3)
     
-    mercado_seleccionado = st.radio(
-        "Mercado",
-        options=list(mercado_opciones.keys()),
-        index=0,  # Japón seleccionado por defecto
-        label_visibility="collapsed",
-        
-    )
-    mercado = mercado_opciones[mercado_seleccionado]
-
+    with col_br:
+        st.image("https://flagcdn.com/br.svg", width=50)
+        if st.button("Brasil", key="btn_brasil", use_container_width=True):
+            st.session_state.mercado = "brasil"
+            st.session_state.mercado_nombre = "Brasil"
+    
+    with col_jp:
+        st.image("https://flagcdn.com/jp.svg", width=50)
+        if st.button("Japón", key="btn_japon", use_container_width=True):
+            st.session_state.mercado = "japon"
+            st.session_state.mercado_nombre = "Japón"
+    
+    with col_de:
+        st.image("https://flagcdn.com/de.svg", width=50)
+        if st.button("Alemania", key="btn_alemania", use_container_width=True):
+            st.session_state.mercado = "alemania"
+            st.session_state.mercado_nombre = "Alemania"
+    
+    # Valor por defecto si no hay selección
+    if "mercado" not in st.session_state:
+        st.session_state.mercado = "japon"
+        st.session_state.mercado_nombre = "Japón"
+    
+    mercado = st.session_state.mercado
+    mercado_seleccionado = st.session_state.mercado_nombre
+    
 with col2:
     st.markdown("### 🤖 Motor de generación")
     st.markdown("Selecciona qué IA generará tu contenido")
