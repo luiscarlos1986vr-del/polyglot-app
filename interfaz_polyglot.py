@@ -157,30 +157,15 @@ with col1:
     st.markdown("### 🎯 Mercado objetivo")
     st.markdown("Selecciona el país para la campaña")
     
-    # Mostrar las banderas en columnas
-    col_flag1, col_flag2, col_flag3 = st.columns(3)
-    
-    with col_flag1:
-        st.image("https://flagcdn.com/br.svg", width=40)
-        st.caption("Brasil")
-    
-    with col_flag2:
-        st.image("https://flagcdn.com/jp.svg", width=40)
-        st.caption("Japón")
-    
-    with col_flag3:
-        st.image("https://flagcdn.com/de.svg", width=40)
-        st.caption("Alemania")
-    
-    # Selector de texto (sin HTML)
+    # Usar emojis de banderas (funcionan en st.radio)
     mercado_opciones = {
-        "Brasil": "brasil",
-        "Japón": "japon",
-        "Alemania": "alemania"
+        "🇧🇷 Brasil": "brasil",
+        "🇯🇵 Japón": "japon",
+        "🇩🇪 Alemania": "alemania"
     }
     
     mercado_seleccionado = st.radio(
-        "País",
+        "Mercado",
         options=list(mercado_opciones.keys()),
         index=1,  # Japón seleccionado por defecto
         label_visibility="collapsed"
