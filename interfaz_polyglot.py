@@ -40,10 +40,10 @@ st.markdown("""
     /* Tarjeta de producto */
     .product-card {
         background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-        padding: 1.5rem;
+        padding: 1rem;
         border-radius: 20px;
         border: 1px solid #333;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1rem;
     }
     /* Tarjetas de comparación */
     .comparison-container {
