@@ -176,21 +176,43 @@ with col2:
     st.markdown("### 🤖 Motor de generación")
     st.markdown("Selecciona qué IA generará tu contenido")
     
-    # Opciones de LLM con nombres claros
-    llm_opciones = {
-        "Gemini (Google)": "gemini",
-        "Deepseek (DeepSeek)": "deepseek",
-        "Mistral (Mistral AI)": "mistral",
-        "Todos (Comparar)": "todos"
-    }
+    # Opción Gemini
+    c1, c2 = st.columns([1, 10])
+    with c1:
+        st.image("https://unpkg.com/@lobehub/icons-static-svg@latest/icons/gemini.svg", width=24)
+    with c2:
+        if st.button("Gemini (Google)", key="gem_btn", use_container_width=True):
+            st.session_state.llm = "gemini"
     
-    llm_seleccionado = st.radio(
-        "LLM",
-        options=list(llm_opciones.keys()),
-        index=0,  # Gemini seleccionado por defecto
-        label_visibility="collapsed"
-    )
-    llm = llm_opciones[llm_seleccionado]
+    # Opción Deepseek
+    c1, c2 = st.columns([1, 10])
+    with c1:
+        st.image("https://unpkg.com/@lobehub/icons-static-svg@latest/icons/deepseek.svg", width=24)
+    with c2:
+        if st.button("Deepseek (DeepSeek)", key="deep_btn", use_container_width=True):
+            st.session_state.llm = "deepseek"
+    
+    # Opción Mistral
+    c1, c2 = st.columns([1, 10])
+    with c1:
+        st.image("https://unpkg.com/@lobehub/icons-static-svg@latest/icons/mistral.svg", width=24)
+    with c2:
+        if st.button("Mistral (Mistral AI)", key="mist_btn", use_container_width=True):
+            st.session_state.llm = "mistral"
+    
+    # Opción Todos
+    c1, c2 = st.columns([1, 10])
+    with c1:
+        st.markdown("🏆")
+    with c2:
+        if st.button("Todos (Comparar)", key="all_btn", use_container_width=True):
+            st.session_state.llm = "todos"
+    
+    # Valor por defecto
+    if "llm" not in st.session_state:
+        st.session_state.llm = "gemini"
+    
+    llm = st.session_state.llm
     
 # ==================== BOTÓN DE GENERACIÓN ====================
 col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
