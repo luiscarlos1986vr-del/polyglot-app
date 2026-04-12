@@ -113,7 +113,7 @@ st.markdown("""
         padding: 1rem;
         color: #888;
         font-size: 0.8rem;
-        border-top: 1px solid #333;
+        border-top: 0.5px solid #444;
     }
     /* Botón personalizado */
     .stButton > button {
