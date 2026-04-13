@@ -167,10 +167,10 @@ with col2:
     
     # Opciones de LLM con nombres claros
     llm_opciones = {
-        "🤖 Gemini (Google)": "gemini",
-        "🔍 Deepseek (DeepSeek)": "deepseek",
-        "🌊 Mistral (Mistral AI)": "mistral",
-        "🏆 Todos (Comparar)": "todos"
+        "Gemini (Google)": "gemini",
+        "Deepseek (DeepSeek)": "deepseek",
+        "Mistral (Mistral AI)": "mistral",
+        "Todos (Comparar)": "todos"
     }
     
     llm_seleccionado = st.radio(
