@@ -15,110 +15,37 @@ st.set_page_config(
 # ==================== ESTILOS CSS PERSONALIZADOS ====================
 st.markdown("""
 <style>
-    /* Título principal */
-    .main-title {
-        text-align: center;
-        font-size: 5rem;
-        color: #6b9bc2;
-        margin-bottom: 0;
-    }
-    .company-name {
-        text-align: center;
-        font-size: 1.2rem;
-        color: #e88710;
-        letter-spacing: 2px;
-        margin-top: -10px;
-        margin-bottom: 5px;
-    }
-    .subtitle {
-        text-align: center;
-        color: #666;
-        margin-bottom: 2rem;
-    }
-    /* Tarjeta de producto */
-    .product-card {
-        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-        padding: 0.5rem;
-        border-radius: 20px;
-        border: 1px solid #333;
-        margin-bottom: 0.5rem;
-    }
-    /* Tarjetas de comparación */
-    .llm-card {
-        background: linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%);
-        border-radius: 16px;
-        padding: 1.2rem;
-        border: 1px solid #333;
-        transition: transform 0.2s, box-shadow 0.2s;
-        height: 100%;
-    }
-    .llm-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-        border-color: #00C9FF;
-    }
-    .winner-badge {
-        background: linear-gradient(135deg, #FFD700, #FFA500);
-        color: #000;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: bold;
-        display: inline-block;
-        margin-bottom: 0.5rem;
-    }
-    .llm-icon {
-        font-size: 2.5rem;
-        text-align: center;
-        margin-bottom: 0.5rem;
-    }
-    .llm-name {
-        text-align: center;
-        font-size: 1.3rem;
-        font-weight: bold;
-        margin-bottom: 0.5rem;
-    }
-    .llm-time {
-        text-align: center;
-        font-size: 0.8rem;
-        color: #888;
-        margin-bottom: 1rem;
-    }
-    .footer {
-        text-align: center;
-        margin-top: 3rem;
-        padding: 0.5rem;
-        color: #888;
-        font-size: 0.8rem;
-        border-top: 0.5px solid #444;
-    }
-    /* Botón principal */
-    .stButton > button {
-        background: linear-gradient(90deg, #1a6b8a, #2a9d6e);
-        color: white;
-        font-weight: bold;
-        border: none;
-        padding: 0.75rem 2rem;
-        border-radius: 30px;
-        transition: transform 0.2s;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-    .stButton > button:hover {
-        transform: scale(1.02);
-        background: linear-gradient(90deg, #1e7a9e, #35b87a);
-        color: white;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-    }
-    /* Ajuste para los radio buttons */
+    /* ... (tus estilos existentes, como .main-title, .company-name, etc.) ... */
+
+    /* Ajuste para los radio buttons (tu estilo original) */
     div[role="radiogroup"] label {
         margin: 5px 0;
-        padding: 5px;
+        padding: 8px 12px; /* Aumentamos un poco el padding para mejor apariencia */
         border-radius: 8px;
-        transition: background-color 0.2s;
+        transition: background-color 0.2s, color 0.2s;
+        cursor: pointer;
     }
     div[role="radiogroup"] label:hover {
         background-color: #2a2a3e;
     }
+
+    /* --- NUEVO: Estilo para la opción SELECCIONADA --- */
+    /* Esto arregla el problema del "fondo negro" */
+    div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked) {
+        background-color: #2c4c6e !important; /* Azul oscuro profesional */
+        color: white !important;
+        font-weight: 500;
+    }
+    
+    /* Mejora el contraste del círculo del radio cuando está seleccionado */
+    div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked) .st-emotion-cache-1b0udgb {
+        border-color: #FFD700 !important;
+    }
+    div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked) .st-emotion-cache-1b0udgb svg {
+        fill: #FFD700 !important;
+    }
+
+    /* ... (el resto de tus estilos, como .footer, etc.) ... */
 </style>
 """, unsafe_allow_html=True)
 
