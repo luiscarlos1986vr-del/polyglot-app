@@ -336,6 +336,6 @@ st.markdown(f'''
 <div class="footer">
     🌍 <strong>Global-Gadgets</strong> - Polyglot Marketing Multilingüe<br>
     🇧🇷 Brasil | 🇯🇵 Japón | 🇩🇪 Alemania<br>
-    Potenciado por 🤖 Gemini | 🔍 Deepseek | 🌊 Mistral
+    Potenciado por  Gemini |  Deepseek |  Mistral
 </div>
 ''', unsafe_allow_html=True)
