@@ -1,11 +1,10 @@
-# interfaz_polyglot.py - VERSIÓN MEJORADA CON BANDERAS E ÍCONOS
+# interfaz_polyglot.py - VERSIÓN DEFINITIVA
 # Requisito 4: Comparación y selección entre LLMs
 import streamlit as st
 import requests
 
 # ==================== CONFIGURACIÓN ====================
-# IMPORTANTE: Cambia esta URL cuando esté en Render
-API_URL = "http://localhost:5000"  # En Render cámbiala por: "https://polyglot-app-5crh.onrender.com"
+API_URL = "https://polyglot-app-5crh.onrender.com" # URL de tu API en producción
 
 st.set_page_config(
     page_title="Global-Gadgets | Polyglot",
@@ -30,6 +29,7 @@ st.markdown("""
         letter-spacing: 2px;
         margin-top: -10px;
         margin-bottom: 5px;
+    }
     .subtitle {
         text-align: center;
         color: #666;
@@ -44,11 +44,6 @@ st.markdown("""
         margin-bottom: 0.5rem;
     }
     /* Tarjetas de comparación */
-    .comparison-container {
-        display: flex;
-        gap: 1rem;
-        margin-top: 1rem;
-    }
     .llm-card {
         background: linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%);
         border-radius: 16px;
@@ -89,42 +84,40 @@ st.markdown("""
         color: #888;
         margin-bottom: 1rem;
     }
-    .flag-icon {
-        font-size: 1.5rem;
-        margin-right: 8px;
-        vertical-align: middle;
-    }
-    .market-option {
-        padding: 8px 12px;
-        border-radius: 10px;
-        margin: 5px 0;
-        transition: background 0.2s;
-    }
-    .market-option:hover {
-        background: #2a2a3e;
-    }
     .footer {
         text-align: center;
         margin-top: 3rem;
-        padding: 1rem;
+        padding: 0.5rem;
         color: #888;
         font-size: 0.8rem;
-        border-top: 1px solid #333;
+        border-top: 0.5px solid #444;
     }
-    /* Botón personalizado */
+    /* Botón principal */
     .stButton > button {
-        background: linear-gradient(90deg, #00C9FF, #92FE9D);
-        color: #000;
+        background: linear-gradient(90deg, #1a6b8a, #2a9d6e);
+        color: white;
         font-weight: bold;
         border: none;
         padding: 0.75rem 2rem;
         border-radius: 30px;
         transition: transform 0.2s;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
     .stButton > button:hover {
         transform: scale(1.02);
-        background: linear-gradient(90deg, #00C9FF, #92FE9D);
-        color: #000;
+        background: linear-gradient(90deg, #1e7a9e, #35b87a);
+        color: white;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    /* Ajuste para los radio buttons */
+    div[role="radiogroup"] label {
+        margin: 5px 0;
+        padding: 5px;
+        border-radius: 8px;
+        transition: background-color 0.2s;
+    }
+    div[role="radiogroup"] label:hover {
+        background-color: #2a2a3e;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -132,7 +125,7 @@ st.markdown("""
 # ==================== HEADER CON EMPRESA ====================
 st.markdown('<p class="main-title">🌍 Polyglot</p>', unsafe_allow_html=True)
 st.markdown('<p class="company-name">⚡ Global-Gadgets ⚡</p>', unsafe_allow_html=True)
-st.markdown('<p class="subtitle">Convierte tu producto en ventas globales 🏆<br>Contenido optimizado para Japón 🇯🇵 | Alemania 🇩🇪 | Brasil 🇧🇷</p>', unsafe_allow_html=True)
+st.markdown('<p class="subtitle">Convierte tu producto en ventas globales 🏆<br>Campaña de Marketing para Japón | Alemania | Brasil</p>', unsafe_allow_html=True)
 
 # ==================== ENTRADA DEL PRODUCTO ====================
 with st.container():
@@ -153,7 +146,7 @@ with col1:
     st.markdown("### 🎯 Mercado objetivo")
     st.markdown("Selecciona el país para la campaña")
     
-    # Opciones de mercado con banderas
+    # Opciones de mercado con banderas (emojis)
     mercado_opciones = {
         "🇧🇷 Brasil": "brasil",
         "🇯🇵 Japón": "japon",
@@ -164,8 +157,7 @@ with col1:
         "Mercado",
         options=list(mercado_opciones.keys()),
         index=1,  # Japón seleccionado por defecto
-        label_visibility="collapsed",
-        format_func=lambda x: x  # Mostrar el texto con bandera
+        label_visibility="collapsed"
     )
     mercado = mercado_opciones[mercado_seleccionado]
 
@@ -173,7 +165,7 @@ with col2:
     st.markdown("### 🤖 Motor de generación")
     st.markdown("Selecciona qué IA generará tu contenido")
     
-    # Opciones de LLM con íconos distintivos
+    # Opciones de LLM con nombres claros
     llm_opciones = {
         "🤖 Gemini (Google)": "gemini",
         "🔍 Deepseek (DeepSeek)": "deepseek",
@@ -185,8 +177,7 @@ with col2:
         "LLM",
         options=list(llm_opciones.keys()),
         index=0,  # Gemini seleccionado por defecto
-        label_visibility="collapsed",
-        format_func=lambda x: x
+        label_visibility="collapsed"
     )
     llm = llm_opciones[llm_seleccionado]
 
@@ -195,9 +186,10 @@ col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
 with col_btn2:
     generar = st.button("✨ Generar campaña internacional ✨", type="primary", use_container_width=True)
 
+
 # ==================== FUNCIONES DE VISUALIZACIÓN ====================
 
-def mostrar_comparacion(resultado):
+def mostrar_comparacion(resultado, mercado_seleccionado_nombre):
     """Muestra los resultados de los 3 LLMs lado a lado para comparar"""
     
     st.markdown("---")
@@ -210,7 +202,7 @@ def mostrar_comparacion(resultado):
     
     posts = resultado["contenido"]["post"]
     
-    # Íconos para cada LLM
+    # Íconos para cada LLM (usando emojis para simplicidad)
     llm_iconos = {
         "Deepseek": "🔍",
         "Mistral": "🌊",
@@ -253,7 +245,7 @@ def mostrar_comparacion(resultado):
                 
                 if st.button(f"✅ Seleccionar {llm_nombre}", key=f"select_{llm_nombre}", use_container_width=True):
                     st.session_state.seleccionado = llm_nombre
-                    st.success(f"🎉 ¡Has seleccionado **{llm_nombre}** para la campaña de {mercado_seleccionado}!")
+                    st.success(f"🎉 ¡Has seleccionado **{llm_nombre}** para la campaña de {mercado_seleccionado_nombre}!")
                     st.balloons()
                     st.rerun()
                 
@@ -268,20 +260,11 @@ def mostrar_comparacion(resultado):
                 st.markdown('</div>', unsafe_allow_html=True)
     
     if st.session_state.seleccionado:
-        st.success(f"📌 **Campaña confirmada con {st.session_state.seleccionado} para {mercado_seleccionado}**")
+        st.success(f"📌 **Campaña confirmada con {st.session_state.seleccionado} para {mercado_seleccionado_nombre}**")
 
-def mostrar_resultados_normales(resultado, llm_usado):
+def mostrar_resultados_normales(resultado, llm_usado_texto):
     """Muestra los resultados en pestañas (modo normal)"""
-    
-    # Ícono para el LLM seleccionado
-    llm_iconos = {
-        "gemini": "🤖",
-        "deepseek": "🔍",
-        "mistral": "🌊"
-    }
-    icono = llm_iconos.get(llm_usado, "🤖")
-    
-    st.markdown(f"### {icono} Resultados generados por {llm_seleccionado}")
+    st.markdown(f"### Resultados generados por {llm_usado_texto}")
     
     tab1, tab2, tab3 = st.tabs(["📱 Redes Sociales", "📧 Email Promocional", "🎯 Eslogans"])
     
@@ -312,7 +295,10 @@ if generar:
     if not descripcion:
         st.error("❌ Por favor, describe tu producto para empezar")
     else:
-        with st.spinner(f"🚀 Generando contenido para {mercado_seleccionado} con {llm_seleccionado}..."):
+        # Obtenemos el texto limpio del mercado para mostrarlo
+        mercado_nombre_para_mostrar = mercado_seleccionado.replace("🇧🇷 ", "").replace("🇯🇵 ", "").replace("🇩🇪 ", "")
+        
+        with st.spinner(f"🚀 Generando contenido para {mercado_nombre_para_mostrar} con {llm_seleccionado}..."):
             try:
                 response = requests.post(
                     f"{API_URL}/generar",
@@ -328,21 +314,21 @@ if generar:
                     resultado = response.json()
                     
                     if resultado.get("exito"):
-                        st.success(f"✅ ¡Campaña generada exitosamente para {mercado_seleccionado}!")
+                        st.success(f"✅ ¡Campaña generada exitosamente para {mercado_nombre_para_mostrar}!")
                         
                         if llm == "todos":
-                            mostrar_comparacion(resultado)
+                            mostrar_comparacion(resultado, mercado_nombre_para_mostrar)
                         else:
-                            mostrar_resultados_normales(resultado, llm)
+                            mostrar_resultados_normales(resultado, llm_seleccionado)
                     else:
                         st.error(f"❌ Error: {resultado.get('error')}")
                 else:
                     st.error(f"❌ Error de conexión: {response.status_code}")
                     
             except requests.exceptions.ConnectionError:
-                st.error("❌ No se pudo conectar al servidor. ¿Ejecutaste 'python api.py'?")
+                st.error("❌ No se pudo conectar al servidor. Asegúrate de que el backend esté corriendo.")
             except Exception as e:
-                st.error(f"❌ Error: {str(e)}")
+                st.error(f"❌ Error inesperado: {str(e)}")
 
 # ==================== PIE DE PÁGINA ====================
 st.markdown("---")
