@@ -1,10 +1,10 @@
-# interfaz_polyglot.py - VERSIÓN DEFINITIVA
+# interfaz_polyglot.py - VERSIÓN PROFESIONAL SIMPLIFICADA
 # Requisito 4: Comparación y selección entre LLMs
 import streamlit as st
 import requests
 
 # ==================== CONFIGURACIÓN ====================
-API_URL = "https://polyglot-app-5crh.onrender.com" # URL de tu API en producción
+API_URL = "https://polyglot-app-5crh.onrender.com"
 
 st.set_page_config(
     page_title="Global-Gadgets | Polyglot",
@@ -15,41 +15,105 @@ st.set_page_config(
 # ==================== ESTILOS CSS PERSONALIZADOS ====================
 st.markdown("""
 <style>
-    /* ... (tus estilos existentes, como .main-title, .company-name, etc.) ... */
-
-    /* Ajuste para los radio buttons (tu estilo original) */
+    .main-title {
+        text-align: center;
+        font-size: 5rem;
+        color: #6b9bc2;
+        margin-bottom: 0;
+    }
+    .company-name {
+        text-align: center;
+        font-size: 1.2rem;
+        color: #e88710;
+        letter-spacing: 2px;
+        margin-top: -10px;
+        margin-bottom: 5px;
+    }
+    .subtitle {
+        text-align: center;
+        color: #666;
+        margin-bottom: 2rem;
+    }
+    .product-card {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        padding: 0.5rem;
+        border-radius: 20px;
+        border: 1px solid #333;
+        margin-bottom: 0.5rem;
+    }
+    .llm-card {
+        background: linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%);
+        border-radius: 16px;
+        padding: 1.2rem;
+        border: 1px solid #333;
+        transition: transform 0.2s, box-shadow 0.2s;
+        height: 100%;
+    }
+    .llm-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        border-color: #00C9FF;
+    }
+    .winner-badge {
+        background: linear-gradient(135deg, #FFD700, #FFA500);
+        color: #000;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: bold;
+        display: inline-block;
+        margin-bottom: 0.5rem;
+    }
+    .llm-icon {
+        font-size: 2.5rem;
+        text-align: center;
+        margin-bottom: 0.5rem;
+    }
+    .llm-name {
+        text-align: center;
+        font-size: 1.3rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    .llm-time {
+        text-align: center;
+        font-size: 0.8rem;
+        color: #888;
+        margin-bottom: 1rem;
+    }
+    .footer {
+        text-align: center;
+        margin-top: 3rem;
+        padding: 0.5rem;
+        color: #888;
+        font-size: 0.8rem;
+        border-top: 0.5px solid #444;
+    }
+    .stButton > button {
+        background: linear-gradient(90deg, #1a6b8a, #2a9d6e);
+        color: white;
+        font-weight: bold;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 30px;
+        transition: transform 0.2s;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .stButton > button:hover {
+        transform: scale(1.02);
+        background: linear-gradient(90deg, #1e7a9e, #35b87a);
+        color: white;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    /* Radio buttons más limpios */
     div[role="radiogroup"] label {
-        margin: 5px 0;
-        padding: 8px 12px; /* Aumentamos un poco el padding para mejor apariencia */
-        border-radius: 8px;
-        transition: background-color 0.2s, color 0.2s;
-        cursor: pointer;
+        padding: 6px 0;
+        font-size: 1rem;
     }
-    div[role="radiogroup"] label:hover {
-        background-color: #2a2a3e;
-    }
-
-    /* --- NUEVO: Estilo para la opción SELECCIONADA --- */
-    /* Esto arregla el problema del "fondo negro" */
-    div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked) {
-        background-color: #2c4c6e !important; /* Azul oscuro profesional */
-        color: white !important;
-        font-weight: 500;
-    }
-    
-    /* Mejora el contraste del círculo del radio cuando está seleccionado */
-    div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked) .st-emotion-cache-1b0udgb {
-        border-color: #FFD700 !important;
-    }
-    div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked) .st-emotion-cache-1b0udgb svg {
-        fill: #FFD700 !important;
-    }
-
-    /* ... (el resto de tus estilos, como .footer, etc.) ... */
 </style>
 """, unsafe_allow_html=True)
 
-# ==================== HEADER CON EMPRESA ====================
+# ==================== HEADER ====================
 st.markdown('<p class="main-title">🌍 Polyglot</p>', unsafe_allow_html=True)
 st.markdown('<p class="company-name">⚡ Global-Gadgets ⚡</p>', unsafe_allow_html=True)
 st.markdown('<p class="subtitle">Convierte tu producto en ventas globales 🏆<br>Campaña de Marketing para Japón | Alemania | Brasil</p>', unsafe_allow_html=True)
@@ -73,17 +137,17 @@ with col1:
     st.markdown("### 🎯 Mercado objetivo")
     st.markdown("Selecciona el país para la campaña")
     
-    # Opciones de mercado con banderas (emojis)
+    # Opciones de mercado - SIMPLE Y PROFESIONAL
     mercado_opciones = {
-        "🇧🇷 Brasil": "brasil",
-        "🇯🇵 Japón": "japon",
-        "🇩🇪 Alemania": "alemania"
+        "Brasil": "brasil",
+        "Japón": "japon",
+        "Alemania": "alemania"
     }
     
     mercado_seleccionado = st.radio(
         "Mercado",
         options=list(mercado_opciones.keys()),
-        index=1,  # Japón seleccionado por defecto
+        index=1,
         label_visibility="collapsed"
     )
     mercado = mercado_opciones[mercado_seleccionado]
@@ -92,7 +156,7 @@ with col2:
     st.markdown("### 🤖 Motor de generación")
     st.markdown("Selecciona qué IA generará tu contenido")
     
-    # Opciones de LLM con nombres claros
+    # Opciones de LLM - SIMPLE Y PROFESIONAL
     llm_opciones = {
         "Gemini (Google)": "gemini",
         "Deepseek (DeepSeek)": "deepseek",
@@ -103,7 +167,7 @@ with col2:
     llm_seleccionado = st.radio(
         "LLM",
         options=list(llm_opciones.keys()),
-        index=0,  # Gemini seleccionado por defecto
+        index=0,
         label_visibility="collapsed"
     )
     llm = llm_opciones[llm_seleccionado]
@@ -113,10 +177,9 @@ col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
 with col_btn2:
     generar = st.button("✨ Generar campaña internacional ✨", type="primary", use_container_width=True)
 
-
 # ==================== FUNCIONES DE VISUALIZACIÓN ====================
 
-def mostrar_comparacion(resultado, mercado_seleccionado_nombre):
+def mostrar_comparacion(resultado, mercado_nombre):
     """Muestra los resultados de los 3 LLMs lado a lado para comparar"""
     
     st.markdown("---")
@@ -129,7 +192,6 @@ def mostrar_comparacion(resultado, mercado_seleccionado_nombre):
     
     posts = resultado["contenido"]["post"]
     
-    # Íconos para cada LLM (usando emojis para simplicidad)
     llm_iconos = {
         "Deepseek": "🔍",
         "Mistral": "🌊",
@@ -172,7 +234,7 @@ def mostrar_comparacion(resultado, mercado_seleccionado_nombre):
                 
                 if st.button(f"✅ Seleccionar {llm_nombre}", key=f"select_{llm_nombre}", use_container_width=True):
                     st.session_state.seleccionado = llm_nombre
-                    st.success(f"🎉 ¡Has seleccionado **{llm_nombre}** para la campaña de {mercado_seleccionado_nombre}!")
+                    st.success(f"🎉 ¡Has seleccionado **{llm_nombre}** para la campaña de {mercado_nombre}!")
                     st.balloons()
                     st.rerun()
                 
@@ -187,11 +249,11 @@ def mostrar_comparacion(resultado, mercado_seleccionado_nombre):
                 st.markdown('</div>', unsafe_allow_html=True)
     
     if st.session_state.seleccionado:
-        st.success(f"📌 **Campaña confirmada con {st.session_state.seleccionado} para {mercado_seleccionado_nombre}**")
+        st.success(f"📌 **Campaña confirmada con {st.session_state.seleccionado} para {mercado_nombre}**")
 
-def mostrar_resultados_normales(resultado, llm_usado_texto):
+def mostrar_resultados_normales(resultado, llm_nombre):
     """Muestra los resultados en pestañas (modo normal)"""
-    st.markdown(f"### Resultados generados por {llm_usado_texto}")
+    st.markdown(f"### Resultados generados por {llm_nombre}")
     
     tab1, tab2, tab3 = st.tabs(["📱 Redes Sociales", "📧 Email Promocional", "🎯 Eslogans"])
     
@@ -222,10 +284,7 @@ if generar:
     if not descripcion:
         st.error("❌ Por favor, describe tu producto para empezar")
     else:
-        # Obtenemos el texto limpio del mercado para mostrarlo
-        mercado_nombre_para_mostrar = mercado_seleccionado.replace("🇧🇷 ", "").replace("🇯🇵 ", "").replace("🇩🇪 ", "")
-        
-        with st.spinner(f"🚀 Generando contenido para {mercado_nombre_para_mostrar} con {llm_seleccionado}..."):
+        with st.spinner(f"🚀 Generando contenido para {mercado_seleccionado} con {llm_seleccionado}..."):
             try:
                 response = requests.post(
                     f"{API_URL}/generar",
@@ -241,10 +300,10 @@ if generar:
                     resultado = response.json()
                     
                     if resultado.get("exito"):
-                        st.success(f"✅ ¡Campaña generada exitosamente para {mercado_nombre_para_mostrar}!")
+                        st.success(f"✅ ¡Campaña generada exitosamente para {mercado_seleccionado}!")
                         
                         if llm == "todos":
-                            mostrar_comparacion(resultado, mercado_nombre_para_mostrar)
+                            mostrar_comparacion(resultado, mercado_seleccionado)
                         else:
                             mostrar_resultados_normales(resultado, llm_seleccionado)
                     else:
@@ -263,6 +322,6 @@ st.markdown(f'''
 <div class="footer">
     🌍 <strong>Global-Gadgets</strong> - Polyglot Marketing Multilingüe<br>
     🇧🇷 Brasil | 🇯🇵 Japón | 🇩🇪 Alemania<br>
-    Potenciado por  Gemini |  Deepseek |  Mistral
+    Potenciado por Gemini | Deepseek | Mistral
 </div>
 ''', unsafe_allow_html=True)
