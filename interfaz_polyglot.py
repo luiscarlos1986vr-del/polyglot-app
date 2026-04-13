@@ -1,4 +1,4 @@
-# interfaz_polyglot.py - VERSIÓN DEFINITIVA CON ÍCONOS FUNCIONALES
+# interfaz_polyglot.py - VERSIÓN PROFESIONAL SIMPLIFICADA
 # Requisito 4: Comparación y selección entre LLMs
 import streamlit as st
 import requests
@@ -105,30 +105,10 @@ st.markdown("""
         color: white;
         box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     }
-    /* Estilo para las opciones de selección */
-    .selection-option {
-        display: flex;
-        align-items: center;
-        padding: 8px 12px;
-        margin: 4px 0;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: background-color 0.2s;
-    }
-    .selection-option:hover {
-        background-color: #2a2a3e;
-    }
-    .selection-option.selected {
-        background-color: #2a4a6e;
-        border-left: 3px solid #6b9bc2;
-    }
-    .selection-icon {
-        width: 24px;
-        margin-right: 12px;
-        text-align: center;
-    }
-    .selection-text {
-        flex-grow: 1;
+    /* Radio buttons más limpios */
+    div[role="radiogroup"] label {
+        padding: 6px 0;
+        font-size: 1rem;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -153,63 +133,44 @@ with st.container():
 # ==================== CONFIGURACIÓN EN COLUMNAS ====================
 col1, col2 = st.columns(2)
 
-# ==================== MERCADO OBJETIVO ====================
 with col1:
     st.markdown("### 🎯 Mercado objetivo")
     st.markdown("Selecciona el país para la campaña")
     
-    # Inicializar selección de mercado
-    if "mercado" not in st.session_state:
-        st.session_state.mercado = "japon"
+    # Opciones de mercado - SIMPLE Y PROFESIONAL
+    mercado_opciones = {
+        "Brasil": "brasil",
+        "Japón": "japon",
+        "Alemania": "alemania"
+    }
     
-    # Opciones de mercado
-    mercados = [
-        {"nombre": "Brasil", "bandera": "🇧🇷", "codigo": "brasil"},
-        {"nombre": "Japón", "bandera": "🇯🇵", "codigo": "japon"},
-        {"nombre": "Alemania", "bandera": "🇩🇪", "codigo": "alemania"}
-    ]
-    
-    for mercado_item in mercados:
-        col_icon, col_text = st.columns([1, 10])
-        with col_icon:
-            st.markdown(f"<span style='font-size:1.5rem;'>{mercado_item['bandera']}</span>", unsafe_allow_html=True)
-        with col_text:
-            if st.button(mercado_item['nombre'], key=f"mercado_{mercado_item['codigo']}", use_container_width=True):
-                st.session_state.mercado = mercado_item['codigo']
-    
-    mercado = st.session_state.mercado
-    mercado_nombre = {"brasil": "Brasil", "japon": "Japón", "alemania": "Alemania"}[mercado]
+    mercado_seleccionado = st.radio(
+        "Mercado",
+        options=list(mercado_opciones.keys()),
+        index=1,
+        label_visibility="collapsed"
+    )
+    mercado = mercado_opciones[mercado_seleccionado]
 
-# ==================== MOTOR DE GENERACIÓN ====================
 with col2:
     st.markdown("### 🤖 Motor de generación")
     st.markdown("Selecciona qué IA generará tu contenido")
     
-    # Inicializar selección de LLM
-    if "llm" not in st.session_state:
-        st.session_state.llm = "gemini"
+    # Opciones de LLM - SIMPLE Y PROFESIONAL
+    llm_opciones = {
+        "Gemini (Google)": "gemini",
+        "Deepseek (DeepSeek)": "deepseek",
+        "Mistral (Mistral AI)": "mistral",
+        "Todos (Comparar)": "todos"
+    }
     
-    # Opciones de LLM con íconos oficiales
-    llms = [
-        {"nombre": "Gemini (Google)", "icono": "https://unpkg.com/@lobehub/icons-static-svg@latest/icons/gemini.svg", "codigo": "gemini"},
-        {"nombre": "Deepseek (DeepSeek)", "icono": "https://unpkg.com/@lobehub/icons-static-svg@latest/icons/deepseek.svg", "codigo": "deepseek"},
-        {"nombre": "Mistral (Mistral AI)", "icono": "https://unpkg.com/@lobehub/icons-static-svg@latest/icons/mistral.svg", "codigo": "mistral"},
-        {"nombre": "Todos (Comparar)", "icono": "🏆", "codigo": "todos"}
-    ]
-    
-    for llm_item in llms:
-        col_icon, col_text = st.columns([1, 10])
-        with col_icon:
-            if llm_item['icono'] == "🏆":
-                st.markdown(f"<span style='font-size:1.5rem;'>{llm_item['icono']}</span>", unsafe_allow_html=True)
-            else:
-                st.image(llm_item['icono'], width=24)
-        with col_text:
-            if st.button(llm_item['nombre'], key=f"llm_{llm_item['codigo']}", use_container_width=True):
-                st.session_state.llm = llm_item['codigo']
-    
-    llm = st.session_state.llm
-    llm_nombre = next((item["nombre"] for item in llms if item["codigo"] == llm), "Gemini (Google)")
+    llm_seleccionado = st.radio(
+        "LLM",
+        options=list(llm_opciones.keys()),
+        index=0,
+        label_visibility="collapsed"
+    )
+    llm = llm_opciones[llm_seleccionado]
 
 # ==================== BOTÓN DE GENERACIÓN ====================
 col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
@@ -323,7 +284,7 @@ if generar:
     if not descripcion:
         st.error("❌ Por favor, describe tu producto para empezar")
     else:
-        with st.spinner(f"🚀 Generando contenido para {mercado_nombre} con {llm_nombre}..."):
+        with st.spinner(f"🚀 Generando contenido para {mercado_seleccionado} con {llm_seleccionado}..."):
             try:
                 response = requests.post(
                     f"{API_URL}/generar",
@@ -339,12 +300,12 @@ if generar:
                     resultado = response.json()
                     
                     if resultado.get("exito"):
-                        st.success(f"✅ ¡Campaña generada exitosamente para {mercado_nombre}!")
+                        st.success(f"✅ ¡Campaña generada exitosamente para {mercado_seleccionado}!")
                         
                         if llm == "todos":
-                            mostrar_comparacion(resultado, mercado_nombre)
+                            mostrar_comparacion(resultado, mercado_seleccionado)
                         else:
-                            mostrar_resultados_normales(resultado, llm_nombre)
+                            mostrar_resultados_normales(resultado, llm_seleccionado)
                     else:
                         st.error(f"❌ Error: {resultado.get('error')}")
                 else:
@@ -361,6 +322,6 @@ st.markdown(f'''
 <div class="footer">
     🌍 <strong>Global-Gadgets</strong> - Polyglot Marketing Multilingüe<br>
     🇧🇷 Brasil | 🇯🇵 Japón | 🇩🇪 Alemania<br>
-    Potenciado por 🤖 Gemini | 🔍 Deepseek | 🌊 Mistral
+    Potenciado por Gemini | Deepseek | Mistral
 </div>
 ''', unsafe_allow_html=True)
