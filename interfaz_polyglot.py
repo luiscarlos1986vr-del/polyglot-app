@@ -19,20 +19,17 @@ st.markdown("""
     /* Título principal */
     .main-title {
         text-align: center;
-        font-size: 3rem;
-        background: linear-gradient(90deg, #00C9FF, #92FE9D);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        font-size: 5rem;
+        color: #6b9bc2;
         margin-bottom: 0;
     }
     .company-name {
         text-align: center;
         font-size: 1.2rem;
-        color: #FFD700;
+        color: #e88710;
         letter-spacing: 2px;
         margin-top: -10px;
         margin-bottom: 5px;
-    }
     .subtitle {
         text-align: center;
         color: #666;
@@ -41,10 +38,10 @@ st.markdown("""
     /* Tarjeta de producto */
     .product-card {
         background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-        padding: 1.5rem;
+        padding: 0.5rem;
         border-radius: 20px;
         border: 1px solid #333;
-        margin-bottom: 1.5rem;
+        margin-bottom: 0.5rem;
     }
     /* Tarjetas de comparación */
     .comparison-container {
