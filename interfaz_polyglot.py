@@ -177,38 +177,31 @@ col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
 with col_btn2:
     generar = st.button("✨ Generar campaña internacional ✨", type="primary", use_container_width=True)
 
-# ==================== FUNCIONES DE VISUALIZACIÓN ====================
-def mostrar_comparacion(resultado, mercado_nombre):
-    """Muestra los resultados de los 3 LLMs para comparar y seleccionar"""
-    
-    st.markdown("---")
-    st.markdown("## 🏆 Comparación de Motores de IA")
-    st.markdown("Revisa el contenido completo de cada motor y selecciona el mejor")
-    
-    contenido = resultado.get("contenido", {})
-    llms_orden = ["Deepseek", "Mistral", "Gemini"]
-    llm_iconos = {"Deepseek": "🔍", "Mistral": "🌊", "Gemini": "🤖"}
-    colores = {"Deepseek": "#00C9FF", "Mistral": "#FF6B6B", "Gemini": "#92FE9D"}
-    
+# En mostrar_comparacion, reemplaza la sección "Vista rápida" con esto:
+
     # --- Resumen lado a lado (vista rápida) ---
     st.markdown("### 📊 Vista rápida")
     cols = st.columns(3)
     
     for idx, llm_nombre in enumerate(llms_orden):
         with cols[idx]:
-            icono = llm_iconos.get(llm_nombre, "🤖")
             color = colores.get(llm_nombre, "#00C9FF")
             
-            # Tiempo del post como referencia
             post_datos = contenido.get("post", {}).get(llm_nombre, {})
             tiempo = post_datos.get("tiempo_ms", "—")
             exito = post_datos.get("exito", False)
             
+            # Tarjeta sutil con gradiente tipo botón (teal/verde)
             st.markdown(f'''
-            <div class="llm-card" style="border-top: 3px solid {color};">
-                <div class="llm-icon">{icono}</div>
-                <div class="llm-name">{llm_nombre}</div>
-                <div class="llm-time">⏱️ {tiempo} ms</div>
+            <div style="background: linear-gradient(135deg, #1a6b8a, #2a9d6e);
+                        border-radius: 16px; padding: 1.2rem; 
+                        border: 1px solid rgba(255,255,255,0.1);
+                        text-align: center; margin-bottom: 0.5rem;">
+                <div style="font-size: 1.3rem; font-weight: bold; color: white;
+                            margin-bottom: 0.3rem;">{llm_nombre}</div>
+                <div style="font-size: 0.8rem; color: rgba(255,255,255,0.7);">
+                    ⏱️ {tiempo} ms
+                </div>
             </div>
             ''', unsafe_allow_html=True)
             
@@ -286,7 +279,7 @@ def mostrar_comparacion(resultado, mercado_nombre):
             st.caption(f"⏱️ Generado en {eslogans.get('tiempo_ms', '—')} ms")
         
         st.success(f"📌 **Campaña de {mercado_nombre} lista con {seleccionado}**")
-        st.balloons()
+        
 
 
 def mostrar_resultados_normales(resultado, llm_nombre):
