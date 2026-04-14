@@ -81,7 +81,7 @@ st.markdown('<p class="subtitle">Convierte tu producto en ventas globales 🏆<b
 # ==================== ENTRADA DEL PRODUCTO ====================
 with st.container():
     st.markdown('<div class="product-card">', unsafe_allow_html=True)
-    st.markdown("### 📦 ¿Qué producto quieres vender al mundo?")
+    st.markdown("## 📦 ¿Qué producto quieres vender al mundo?")
     descripcion = st.text_area(
         "",
         placeholder="Ej: Auriculares con cancelación de ruido, 40h de batería",
