@@ -178,78 +178,116 @@ with col_btn2:
     generar = st.button("✨ Generar campaña internacional ✨", type="primary", use_container_width=True)
 
 # ==================== FUNCIONES DE VISUALIZACIÓN ====================
-
 def mostrar_comparacion(resultado, mercado_nombre):
-    """Muestra los resultados de los 3 LLMs lado a lado para comparar"""
+    """Muestra los resultados de los 3 LLMs para comparar y seleccionar"""
     
     st.markdown("---")
     st.markdown("## 🏆 Comparación de Motores de IA")
-    st.markdown("Selecciona la mejor opción para tu campaña")
+    st.markdown("Revisa el contenido completo de cada motor y selecciona el mejor")
     
-    if "post" not in resultado["contenido"]:
-        st.warning("No hay datos de post para comparar")
-        return
-    
-    posts = resultado["contenido"]["post"]
-    
-    llm_iconos = {
-        "Deepseek": "🔍",
-        "Mistral": "🌊",
-        "Gemini": "🤖"
-    }
-    
-    colores = {
-        "Deepseek": "#00C9FF",
-        "Mistral": "#FF6B6B",
-        "Gemini": "#92FE9D"
-    }
-    
-    col1, col2, col3 = st.columns(3)
-    columnas = [col1, col2, col3]
+    contenido = resultado.get("contenido", {})
     llms_orden = ["Deepseek", "Mistral", "Gemini"]
+    llm_iconos = {"Deepseek": "🔍", "Mistral": "🌊", "Gemini": "🤖"}
+    colores = {"Deepseek": "#00C9FF", "Mistral": "#FF6B6B", "Gemini": "#92FE9D"}
     
-    if 'seleccionado' not in st.session_state:
-        st.session_state.seleccionado = None
+    # --- Resumen lado a lado (vista rápida) ---
+    st.markdown("### 📊 Vista rápida")
+    cols = st.columns(3)
     
     for idx, llm_nombre in enumerate(llms_orden):
-        with columnas[idx]:
-            datos = posts.get(llm_nombre, {})
+        with cols[idx]:
             icono = llm_iconos.get(llm_nombre, "🤖")
             color = colores.get(llm_nombre, "#00C9FF")
             
-            if datos.get("exito"):
-                if st.session_state.seleccionado == llm_nombre:
-                    st.markdown(f'<div class="winner-badge" style="background: linear-gradient(135deg, #FFD700, #FFA500);">⭐ SELECCIONADO PARA LA CAMPAÑA ⭐</div>', unsafe_allow_html=True)
+            # Tiempo del post como referencia
+            post_datos = contenido.get("post", {}).get(llm_nombre, {})
+            tiempo = post_datos.get("tiempo_ms", "—")
+            exito = post_datos.get("exito", False)
+            
+            st.markdown(f'''
+            <div class="llm-card" style="border-top: 3px solid {color};">
+                <div class="llm-icon">{icono}</div>
+                <div class="llm-name">{llm_nombre}</div>
+                <div class="llm-time">⏱️ {tiempo} ms</div>
+            </div>
+            ''', unsafe_allow_html=True)
+            
+            if exito:
+                with st.expander("📱 Post", expanded=False):
+                    st.write(post_datos.get("respuesta", ""))
                 
-                st.markdown(f'''
-                <div class="llm-card" style="border-top: 3px solid {color};">
-                    <div class="llm-icon">{icono}</div>
-                    <div class="llm-name">{llm_nombre}</div>
-                    <div class="llm-time">⏱️ {datos.get("tiempo_ms", 0)} ms</div>
-                ''', unsafe_allow_html=True)
+                email_datos = contenido.get("email", {}).get(llm_nombre, {})
+                if email_datos.get("exito"):
+                    with st.expander("📧 Email", expanded=False):
+                        st.write(email_datos.get("respuesta", ""))
                 
-                respuesta = datos.get("respuesta", "")
-                with st.expander("📱 Ver post generado", expanded=True):
-                    st.write(respuesta)
-                
-                if st.button(f"✅ Seleccionar {llm_nombre}", key=f"select_{llm_nombre}", use_container_width=True):
-                    st.session_state.seleccionado = llm_nombre
-                    st.success(f"🎉 ¡Has seleccionado **{llm_nombre}** para la campaña de {mercado_nombre}!")
-                    st.balloons()
-                    st.rerun()
-                
-                st.markdown('</div>', unsafe_allow_html=True)
+                eslogan_datos = contenido.get("eslogans", {}).get(llm_nombre, {})
+                if eslogan_datos.get("exito"):
+                    with st.expander("🎯 Eslogans", expanded=False):
+                        st.write(eslogan_datos.get("respuesta", ""))
             else:
-                st.markdown(f'''
-                <div class="llm-card">
-                    <div class="llm-icon">{icono}</div>
-                    <div class="llm-name">{llm_nombre}</div>
-                ''', unsafe_allow_html=True)
-                st.error(f"❌ Error: {datos.get('error', 'Desconocido')}")
-                st.markdown('</div>', unsafe_allow_html=True)
+                st.error(f"❌ {post_datos.get('error', 'Error desconocido')}")
     
-    if st.session_state.seleccionado:
-        st.success(f"📌 **Campaña confirmada con {st.session_state.seleccionado} para {mercado_nombre}**")
+    # --- Selector de ganador ---
+    st.markdown("---")
+    st.markdown("### ⭐ Selecciona el motor ganador")
+    
+    opciones_disponibles = [
+        llm for llm in llms_orden 
+        if contenido.get("post", {}).get(llm, {}).get("exito", False)
+    ]
+    
+    if not opciones_disponibles:
+        st.warning("No hay resultados exitosos para seleccionar.")
+        return
+    
+    seleccionado = st.radio(
+        "Elige el LLM para tu campaña:",
+        options=opciones_disponibles,
+        format_func=lambda x: f"{llm_iconos.get(x, '🤖')} {x}",
+        horizontal=True,
+        label_visibility="collapsed"
+    )
+    
+    # --- Despliegue completo del seleccionado ---
+    if seleccionado:
+        color = colores.get(seleccionado, "#00C9FF")
+        icono = llm_iconos.get(seleccionado, "🤖")
+        
+        st.markdown(f'''
+        <div style="background: linear-gradient(135deg, #1a1a2e, #16213e); 
+                    border: 2px solid {color}; border-radius: 20px; 
+                    padding: 1.5rem; margin-top: 1rem;">
+            <h2 style="text-align:center; color:{color};">
+                {icono} Campaña completa con {seleccionado}
+            </h2>
+        </div>
+        ''', unsafe_allow_html=True)
+        
+        # Post
+        post = contenido.get("post", {}).get(seleccionado, {})
+        if post.get("exito"):
+            st.markdown("#### 📱 Post para Redes Sociales")
+            st.info(post["respuesta"])
+            st.caption(f"⏱️ Generado en {post.get('tiempo_ms', '—')} ms")
+        
+        # Email
+        email = contenido.get("email", {}).get(seleccionado, {})
+        if email.get("exito"):
+            st.markdown("#### 📧 Email Promocional")
+            st.info(email["respuesta"])
+            st.caption(f"⏱️ Generado en {email.get('tiempo_ms', '—')} ms")
+        
+        # Eslogans
+        eslogans = contenido.get("eslogans", {}).get(seleccionado, {})
+        if eslogans.get("exito"):
+            st.markdown("#### 🎯 Eslogans")
+            st.info(eslogans["respuesta"])
+            st.caption(f"⏱️ Generado en {eslogans.get('tiempo_ms', '—')} ms")
+        
+        st.success(f"📌 **Campaña de {mercado_nombre} lista con {seleccionado}**")
+        st.balloons()
+
 
 def mostrar_resultados_normales(resultado, llm_nombre):
     """Muestra los resultados en pestañas (modo normal)"""
