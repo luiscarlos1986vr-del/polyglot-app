@@ -18,13 +18,13 @@ st.markdown("""
 <style>
     .main-title {
         text-align: center;
-        font-size: 2.5rem;
+        font-size: 7rem;
         color: #6b9bc2;
         margin-bottom: 0;
     }
     .company-name {
         text-align: center;
-        font-size: 2.5rem;
+        font-size: 3rem;
         color: #e88710;
         letter-spacing: 2px;
         margin-top: -10px;
@@ -74,7 +74,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==================== HEADER ====================
-st.markdown('<p class="main-title">🌍## Polyglot</p>', unsafe_allow_html=True)
+st.markdown('<p class="main-title">🌍 Polyglot</p>', unsafe_allow_html=True)
 st.markdown('<p class="company-name">⚡ Global-Gadgets ⚡</p>', unsafe_allow_html=True)
 st.markdown('<p class="subtitle">Convierte tu producto en ventas globales 🏆<br>Campaña de Marketing para Japón | Alemania | Brasil</p>', unsafe_allow_html=True)
 
