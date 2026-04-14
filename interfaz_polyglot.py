@@ -187,65 +187,7 @@ def mostrar_comparacion(resultado, mercado_nombre):
             else:
                 st.error(f"❌ {post_datos.get('error', 'Error desconocido')}")
 
-    # --- Selector de ganador ---
-    st.markdown("---")
-    st.markdown("### ⭐ Selecciona el motor ganador")
-
-    opciones_disponibles = [
-        llm for llm in llms_orden
-        if contenido.get("post", {}).get(llm, {}).get("exito", False)
-    ]
-
-    if not opciones_disponibles:
-        st.warning("No hay resultados exitosos para seleccionar.")
-        return
-
-    seleccionado = st.radio(
-        "Elige el LLM para tu campaña:",
-        options=opciones_disponibles,
-        format_func=lambda x: f"{llm_iconos.get(x, '🤖')} {x}",
-        horizontal=True,
-        label_visibility="collapsed"
-    )
-
-    # --- Despliegue completo del seleccionado ---
-    if seleccionado:
-        color = colores.get(seleccionado, "#00C9FF")
-        icono = llm_iconos.get(seleccionado, "🤖")
-
-        st.markdown(f'''
-        <div style="background: linear-gradient(135deg, #1a1a2e, #16213e);
-                    border: 2px solid {color}; border-radius: 20px;
-                    padding: 1.5rem; margin-top: 1rem;">
-            <h2 style="text-align:center; color:{color};">
-                {icono} Campaña completa con {seleccionado}
-            </h2>
-        </div>
-        ''', unsafe_allow_html=True)
-
-        # Post
-        post = contenido.get("post", {}).get(seleccionado, {})
-        if post.get("exito"):
-            st.markdown("#### 📱 Post para Redes Sociales")
-            st.info(post["respuesta"])
-            st.caption(f"⏱️ Generado en {post.get('tiempo_ms', '—')} ms")
-
-        # Email
-        email = contenido.get("email", {}).get(seleccionado, {})
-        if email.get("exito"):
-            st.markdown("#### 📧 Email Promocional")
-            st.info(email["respuesta"])
-            st.caption(f"⏱️ Generado en {email.get('tiempo_ms', '—')} ms")
-
-        # Eslogans
-        eslogans = contenido.get("eslogans", {}).get(seleccionado, {})
-        if eslogans.get("exito"):
-            st.markdown("#### 🎯 Eslogans")
-            st.info(eslogans["respuesta"])
-            st.caption(f"⏱️ Generado en {eslogans.get('tiempo_ms', '—')} ms")
-
-        st.success(f"📌 **Campaña de {mercado_nombre} lista con {seleccionado}**")
-
+    
 
 def mostrar_resultados_normales(resultado, llm_nombre):
     """Muestra los resultados en pestañas (modo normal)"""
