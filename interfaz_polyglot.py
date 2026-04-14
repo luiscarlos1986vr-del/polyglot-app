@@ -18,13 +18,13 @@ st.markdown("""
 <style>
     .main-title {
         text-align: center;
-        font-size: 3.5rem;
+        font-size: 8vw; #3.5rem
         color: #6b9bc2;
         margin-bottom: 0;
     }
     .company-name {
         text-align: center;
-        font-size: 2rem;
+        font-size: 4vw; #2rem
         color: #e88710;
         letter-spacing: 2px;
         margin-top: -10px;
