@@ -142,7 +142,7 @@ def mostrar_comparacion(resultado, mercado_nombre):
 
     contenido = resultado.get("contenido", {})
     llms_orden = ["Deepseek", "Mistral", "Gemini"]
-    llm_iconos = {"Deepseek": "🔍", "Mistral": "🌊", "Gemini": "🤖"}
+    #llm_iconos = {"Deepseek": "🔍", "Mistral": "🌊", "Gemini": "🤖"}
     colores = {"Deepseek": "#00C9FF", "Mistral": "#FF6B6B", "Gemini": "#92FE9D"}
 
     # --- Resumen lado a lado (vista rápida) ---
@@ -159,7 +159,7 @@ def mostrar_comparacion(resultado, mercado_nombre):
 
             # Tarjeta sutil con gradiente tipo botón (teal/verde)
             st.markdown(f'''
-            <div style="background: linear-gradient(135deg, #1a6b8a, #2a9d6e);
+            <div style="background: linear-gradient(100deg, #1a6b8a, #2a9d6e);
                         border-radius: 16px; padding: 1.2rem;
                         border: 1px solid rgba(255,255,255,0.1);
                         text-align: center; margin-bottom: 0.5rem;">
