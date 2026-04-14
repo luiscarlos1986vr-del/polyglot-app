@@ -104,7 +104,7 @@ with col1:
     mercado_seleccionado = st.radio(
         "Mercado",
         options=list(mercado_opciones.keys()),
-        index=1,
+        index=0,
         label_visibility="collapsed"
     )
     mercado = mercado_opciones[mercado_seleccionado]
@@ -142,7 +142,6 @@ def mostrar_comparacion(resultado, mercado_nombre):
 
     contenido = resultado.get("contenido", {})
     llms_orden = ["Deepseek", "Mistral", "Gemini"]
-    #llm_iconos = {"Deepseek": "🔍", "Mistral": "🌊", "Gemini": "🤖"}
     colores = {"Deepseek": "#00C9FF", "Mistral": "#FF6B6B", "Gemini": "#92FE9D"}
 
     # --- Resumen lado a lado (vista rápida) ---
@@ -172,17 +171,17 @@ def mostrar_comparacion(resultado, mercado_nombre):
             ''', unsafe_allow_html=True)
 
             if exito:
-                with st.expander("📱 Post", expanded=False):
+                with st.expander("📱 Post", expanded=True):
                     st.write(post_datos.get("respuesta", ""))
 
                 email_datos = contenido.get("email", {}).get(llm_nombre, {})
                 if email_datos.get("exito"):
-                    with st.expander("📧 Email", expanded=False):
+                    with st.expander("📧 Email", expanded=True):
                         st.write(email_datos.get("respuesta", ""))
 
                 eslogan_datos = contenido.get("eslogans", {}).get(llm_nombre, {})
                 if eslogan_datos.get("exito"):
-                    with st.expander("🎯 Eslogans", expanded=False):
+                    with st.expander("🎯 Eslogans", expanded=True):
                         st.write(eslogan_datos.get("respuesta", ""))
             else:
                 st.error(f"❌ {post_datos.get('error', 'Error desconocido')}")
