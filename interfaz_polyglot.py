@@ -74,14 +74,14 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==================== HEADER ====================
-st.markdown('<p class="main-title">🌍 Polyglot</p>', unsafe_allow_html=True)
+st.markdown('<p class="main-title">🌍## Polyglot</p>', unsafe_allow_html=True)
 st.markdown('<p class="company-name">⚡ Global-Gadgets ⚡</p>', unsafe_allow_html=True)
 st.markdown('<p class="subtitle">Convierte tu producto en ventas globales 🏆<br>Campaña de Marketing para Japón | Alemania | Brasil</p>', unsafe_allow_html=True)
 
 # ==================== ENTRADA DEL PRODUCTO ====================
 with st.container():
     st.markdown('<div class="product-card">', unsafe_allow_html=True)
-    st.markdown("## 📦 ¿Qué producto quieres vender al mundo?")
+    st.markdown("### 📦 ¿Qué producto quieres vender al mundo?")
     descripcion = st.text_area(
         "",
         placeholder="Ej: Auriculares con cancelación de ruido, 40h de batería",
