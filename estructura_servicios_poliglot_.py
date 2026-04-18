@@ -250,9 +250,8 @@ def consultar_mistral(prompt, temperatura=0.7):
         )
         tiempo_ms = int((time.time() - inicio) * 1000)
         
-        # ✅ CORRECTO: Mistral devuelve respuesta.choices[0].message.content (es igual que OpenAI)
-        # Pero a veces la estructura es diferente. Usamos este formato más seguro:
-        contenido = respuesta.choices[0].message.content if respuesta.choices else str(respuesta)
+        # ✅ Formato alternativo para Mistral
+        contenido = respuesta.choices[0].message.content
         
         return {
             "exito": True,
@@ -261,6 +260,26 @@ def consultar_mistral(prompt, temperatura=0.7):
             "tiempo_ms": tiempo_ms,
             "modelo": "Mistral"
         }
+    except AttributeError as e:
+        # Si no tiene .choices, intentamos acceder directamente
+        tiempo_ms = int((time.time() - inicio) * 1000)
+        try:
+            contenido = respuesta.message.content if hasattr(respuesta, 'message') else str(respuesta)
+            return {
+                "exito": True,
+                "respuesta": contenido,
+                "error": None,
+                "tiempo_ms": tiempo_ms,
+                "modelo": "Mistral"
+            }
+        except:
+            return {
+                "exito": False,
+                "respuesta": None,
+                "error": f"Error de formato: {str(e)}",
+                "tiempo_ms": tiempo_ms,
+                "modelo": "Mistral"
+            }
     except Exception as e:
         tiempo_ms = int((time.time() - inicio) * 1000)
         return {
@@ -270,7 +289,6 @@ def consultar_mistral(prompt, temperatura=0.7):
             "tiempo_ms": tiempo_ms,
             "modelo": "Mistral"
         }
-
 
 def consultar_gemini(prompt, temperatura=0.7):
     """
