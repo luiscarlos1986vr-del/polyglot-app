@@ -374,11 +374,21 @@ def generar_campana_completa(descripcion_producto, mercado, llm_seleccionado="to
             prueba = consulta_func("Di hola")
             nombre_modelo = prueba.get("modelo", "desconocido")
             
-            # Consulta real
+           # Consulta real
             respuesta = consulta_func(prompt)
             
+            # Obtener el texto de la respuesta
+            respuesta_texto = respuesta.get("respuesta")
+            
+            # Traducir al español si la respuesta es exitosa
+            traduccion = None
+            if respuesta.get("exito") and respuesta_texto:
+                codigo_idioma = MERCADOS[mercado]["codigo_idioma"]
+                traduccion = traducir_a_espanol(respuesta_texto, codigo_idioma)
+            
             resultados["contenido"][tipo_contenido][nombre_modelo] = {
-                "respuesta": respuesta.get("respuesta"),
+                "respuesta": respuesta_texto,
+                "traduccion": traduccion,  # ← NUEVO: traducción al español
                 "exito": respuesta.get("exito"),
                 "error": respuesta.get("error"),
                 "tiempo_ms": respuesta.get("tiempo_ms")
@@ -445,6 +455,55 @@ def comparar_llms_para_contenido(descripcion_producto, mercado, tipo_contenido="
         }
     
     return resultados
+
+# TRDUCCIÓN A ESP
+
+# ==================== FUNCIÓN DE TRADUCCIÓN ====================
+def traducir_a_espanol(texto, idioma_origen):
+    """
+    Traduce un texto del idioma origen al español.
+    
+    Args:
+        texto (str): Texto a traducir
+        idioma_origen (str): 'ja', 'de', 'pt-BR'
+    
+    Returns:
+        str: Texto traducido al español
+    """
+    if not texto:
+        return "⚠️ No hay texto para traducir"
+    
+    # Mapeo de idiomas para el prompt
+    idiomas = {
+        "ja": "japonés",
+        "de": "alemán",
+        "pt-BR": "portugués de Brasil"
+    }
+    
+    nombre_idioma = idiomas.get(idioma_origen, "el idioma original")
+    
+    prompt_traduccion = f"""
+    Traduce el siguiente texto del {nombre_idioma} al español.
+    Mantén el tono y estilo original.
+    Responde SOLO con la traducción, sin explicaciones.
+    
+    TEXTO ORIGINAL:
+    {texto}
+    
+    TRADUCCIÓN AL ESPAÑOL:
+    """
+    
+    try:
+        # Usar Gemini para traducir (es rápido y gratuito)
+        respuesta = gemini_client.models.generate_content(
+            model="gemini-2.5-flash-lite",
+            contents=prompt_traduccion,
+            config={"temperature": 0.3, "max_output_tokens": 800}
+        )
+        return respuesta.text.strip()
+    except Exception as e:
+        return f"❌ Error en traducción: {str(e)}"
+
 
 
 # ==================== EJEMPLO DE USO (PARA PRUEBAS) ====================
