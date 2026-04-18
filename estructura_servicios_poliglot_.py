@@ -169,33 +169,36 @@ def construir_prompt_email(descripcion_producto, mercado):
 def construir_prompt_eslogans(descripcion_producto, mercado):
     """
     REQUISITO 2: Construye el prompt para generar 3 eslóganes publicitarios
-    
-    Args:
-        descripcion_producto (str): Descripción del producto
-        mercado (str): Clave del mercado
-    
-    Returns:
-        str: Prompt completo para los eslóganes
+    VERSIÓN MEJORADA - ESPECÍFICA PARA MISTRAL
     """
     config = MERCADOS[mercado]
     
     prompt = f"""
-    Actúa como un creativo publicitario con experiencia en el mercado {config['nombre_pais']}.
-    
-    TAREA: Generar 3 eslóganes publicitarios en IDIOMA {config['codigo_idioma']}.
-    
-    PRODUCTO:
-    {descripcion_producto}
-    
-    REQUISITOS:
-    - Cada eslogan: máximo 8 palabras
-    - Tono: {config['tono']}
-    - Deben ser memorables y persuasivos
-    - Adaptación cultural: {config['referencias_culturales']}
-    
-    Responde ÚNICAMENTE con los 3 eslóganes, uno por línea, sin numerar.
-    """
+Eres un experto creativo publicitario especializado en el mercado de {config['nombre_pais']}.
+
+Tu tarea es generar EXACTAMENTE 3 eslóganes publicitarios para el siguiente producto:
+
+PRODUCTO: "{descripcion_producto}"
+
+REQUISITOS OBLIGATORIOS:
+1. Los 3 eslóganes deben estar en IDIOMA {config['codigo_idioma']} ({config['nombre_pais']})
+2. Cada eslogan debe tener MÁXIMO 8 palabras
+3. Tono del eslogan: {config['tono']}
+4. Debe incluir referencias culturales: {config['referencias_culturales']}
+5. Los eslóganes deben ser creativos, memorables y persuasivos
+
+FORMATO DE RESPUESTA (ESTRICTO):
+Responde ÚNICAMENTE con los 3 eslóganes, UNO POR LÍNEA, comenzando cada línea con un guión.
+
+Ejemplo de formato correcto:
+- Silencio absoluto, batería infinita
+- Escucha lo que importa
+- Tecnología que te acompaña
+
+Ahora genera los 3 eslóganes para el producto indicado, siguiendo EXACTAMENTE el formato del ejemplo.
+"""
     return prompt
+
 
 def consultar_mistral_eslogans(prompt, temperatura=0.7):
     """
@@ -261,6 +264,7 @@ def consultar_mistral_eslogans(prompt, temperatura=0.7):
             "modelo": "Mistral"
         }
 
+
 # ==================== FUNCIONES DE CONSULTA A LLMs ====================
 # REQUISITO 1: Conectividad Multi-LLM
 # Cada función se comunica con un LLM específico
@@ -302,11 +306,14 @@ def consultar_deepseek(prompt, temperatura=0.7):
             "modelo": "Deepseek"
         }
 
+
 def consultar_mistral(prompt, temperatura=0.7):
+    """
+    Envía un prompt a Mistral usando requests directos.
+    Más confiable que el SDK.
+    """
     import requests
     inicio = time.time()
-    
-    print(f"🔍 Mistral - Enviando prompt: {prompt[:100]}...")  # ← LOG
     
     url = "https://api.mistral.ai/v1/chat/completions"
     headers = {
@@ -322,37 +329,36 @@ def consultar_mistral(prompt, temperatura=0.7):
     
     try:
         response = requests.post(url, headers=headers, json=data, timeout=TIMEOUT)
-        print(f"🔍 Mistral - Status code: {response.status_code}")  # ← LOG
+        tiempo_ms = int((time.time() - inicio) * 1000)
         
         if response.status_code == 200:
             resultado = response.json()
             contenido = resultado["choices"][0]["message"]["content"]
-            print(f"🔍 Mistral - Respuesta recibida: {contenido[:100]}...")  # ← LOG
             return {
                 "exito": True,
                 "respuesta": contenido,
                 "error": None,
-                "tiempo_ms": int((time.time() - inicio) * 1000),
+                "tiempo_ms": tiempo_ms,
                 "modelo": "Mistral"
             }
         else:
-            print(f"❌ Mistral - Error HTTP {response.status_code}: {response.text[:200]}")  # ← LOG
             return {
                 "exito": False,
                 "respuesta": None,
                 "error": f"HTTP {response.status_code}",
-                "tiempo_ms": int((time.time() - inicio) * 1000),
+                "tiempo_ms": tiempo_ms,
                 "modelo": "Mistral"
             }
     except Exception as e:
-        print(f"❌ Mistral - Excepción: {str(e)}")  # ← LOG
+        tiempo_ms = int((time.time() - inicio) * 1000)
         return {
             "exito": False,
             "respuesta": None,
             "error": str(e),
-            "tiempo_ms": int((time.time() - inicio) * 1000),
+            "tiempo_ms": tiempo_ms,
             "modelo": "Mistral"
         }
+
 
 def consultar_gemini(prompt, temperatura=0.7):
     """
@@ -453,19 +459,14 @@ def generar_campana_completa(descripcion_producto, mercado, llm_seleccionado="to
         
         for consulta_func in llms_a_usar:
             # Obtener nombre del modelo para usarlo como clave
-            # Llamada de prueba para saber qué modelo es
             prueba = consulta_func("Di hola")
             nombre_modelo = prueba.get("modelo", "desconocido")
-
-           ##### eslogan mistral ####    
-           if tipo_contenido == "eslogans" and nombre_modelo == "Mistral":
+            
+            # ⭐ USAR FUNCIÓN ESPECIAL PARA ESLÓGANES DE MISTRAL ⭐
+            if tipo_contenido == "eslogans" and nombre_modelo == "Mistral":
                 respuesta = consultar_mistral_eslogans(prompt)
             else:
                 respuesta = consulta_func(prompt)
-                      
-            
-           # Consulta real
-            respuesta = consulta_func(prompt)
             
             # Obtener el texto de la respuesta
             respuesta_texto = respuesta.get("respuesta")
@@ -478,7 +479,7 @@ def generar_campana_completa(descripcion_producto, mercado, llm_seleccionado="to
             
             resultados["contenido"][tipo_contenido][nombre_modelo] = {
                 "respuesta": respuesta_texto,
-                "traduccion": traduccion,  # ← NUEVO: traducción al español
+                "traduccion": traduccion,
                 "exito": respuesta.get("exito"),
                 "error": respuesta.get("error"),
                 "tiempo_ms": respuesta.get("tiempo_ms")
@@ -546,8 +547,6 @@ def comparar_llms_para_contenido(descripcion_producto, mercado, tipo_contenido="
     
     return resultados
 
-# TRDUCCIÓN A ESP
-
 
 # ==================== FUNCIÓN DE TRADUCCIÓN ====================
 def traducir_a_espanol(texto, idioma_origen):
@@ -612,7 +611,7 @@ def traducir_a_espanol(texto, idioma_origen):
     except Exception as e:
         print(f"⚠️ Error en Deepseek: {str(e)}")
     
-        # Intento 3: Mistral (último respaldo) - VERSIÓN REQUESTS
+    # Intento 3: Mistral (último respaldo)
     try:
         import requests
         url = "https://api.mistral.ai/v1/chat/completions"
@@ -634,6 +633,8 @@ def traducir_a_espanol(texto, idioma_origen):
             print(f"⚠️ Error Mistral traducción: {response.status_code}")
     except Exception as e:
         print(f"⚠️ Error en Mistral traducción: {str(e)}")
+    
+    return f"❌ Error en traducción: No se pudo traducir el texto"
 
 
 # ==================== EJEMPLO DE USO (PARA PRUEBAS) ====================
@@ -668,6 +669,11 @@ if __name__ == "__main__":
         if "post" in resultado["contenido"] and "Deepseek" in resultado["contenido"]["post"]:
             print("\n📱 EJEMPLO - POST (Deepseek):")
             print(resultado["contenido"]["post"]["Deepseek"]["respuesta"][:200] + "...")
+        
+        # Mostrar eslóganes de Mistral si existen
+        if "eslogans" in resultado["contenido"] and "Mistral" in resultado["contenido"]["eslogans"]:
+            print("\n💡 EJEMPLO - ESLÓGANES (Mistral):")
+            print(resultado["contenido"]["eslogans"]["Mistral"]["respuesta"][:200] + "...")
     else:
         print(f"\n❌ Error: {resultado.get('error')}")
     
