@@ -25,6 +25,40 @@ from google import genai  # Gemini
 # ✅ Conservado - Cargar variables del archivo .env
 load_dotenv()
 
+
+# ... tus imports ...
+from dotenv import load_dotenv
+import os
+
+# ==================== CARGA FORZADA DE VARIABLES ====================
+# Cargar .env local normalmente
+load_dotenv()
+
+# --- DIAGNÓSTICO: Veremos qué clave se está cargando ---
+mistral_key_env = os.getenv("MISTRAL_API_KEY")
+print(f"🔍 [DIAGNÓSTICO] MISTRAL_API_KEY leída desde os.getenv(): {'*' * 10 if mistral_key_env else 'NO ENCONTRADA'}...")
+
+# --- FUERZA BRUTA: Si la clave no es la correcta, la reemplazamos ---
+# <<< --- AQUÍ DEBES PEGAR TU NUEVA CLAVE COMPLETA DE MISTRAL --- >>>
+NUEVA_CLAVE_MISTRAL_PAGO = "kxl1akJy3go..." # <--- ¡PEGA AQUÍ TU CLAVE REAL!
+
+# Si la clave cargada no empieza como la nueva (ej: "kxl1ak..."), la reemplazamos
+if mistral_key_env and not mistral_key_env.startswith("kxl1ak"):
+    print("⚠️ [DIAGNÓSTICO] Se detectó una clave antigua. ¡Reemplazando por la clave de pago!")
+    MISTRAL_API_KEY = NUEVA_CLAVE_MISTRAL_PAGO
+    # También forzamos el cambio en el entorno por si acaso
+    os.environ["MISTRAL_API_KEY"] = MISTRAL_API_KEY
+else:
+    MISTRAL_API_KEY = mistral_key_env
+    print("✅ [DIAGNÓSTICO] La clave cargada parece ser la correcta.")
+
+print(f"🔑 [DIAGNÓSTICO] Clave que usará el código: {MISTRAL_API_KEY[:10] if MISTRAL_API_KEY else 'NO EXISTE'}...")
+# ================================================================
+
+# ... el resto de tu código (MERCADOS, funciones, etc.) ...
+
+
+
 # ✅ Conservado - Configuración de API keys
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
