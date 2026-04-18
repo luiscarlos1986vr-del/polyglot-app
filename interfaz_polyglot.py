@@ -360,19 +360,8 @@ def mostrar_resultados_normales(resultado, llm_usado_texto):
     with tab3:
         st.markdown("#### 🎯 Eslogans Publicitarios")
         
-        # Depuración: mostrar qué hay en resultado["contenido"]
-        with st.expander("🔧 Información de depuración (solo para desarrolladores)", expanded=False):
-            st.json({
-                "claves_disponibles": list(resultado["contenido"].keys()),
-                "tiene_eslogans": "eslogans" in resultado["contenido"],
-                "llm_usado": llm_usado_texto
-            })
-        
         if "eslogans" in resultado["contenido"]:
-            eslogans_data = resultado["contenido"]["eslogans"]
-            st.success(f"✅ Se encontraron {len(eslogans_data)} resultado(s) de eslóganes")
-            
-            for modelo, datos in eslogans_data.items():
+            for modelo, datos in resultado["contenido"]["eslogans"].items():
                 if datos.get("exito"):
                     with st.expander(f"💡 {modelo}", expanded=True):
                         st.markdown("**🌐 Original:**")
@@ -387,10 +376,10 @@ def mostrar_resultados_normales(resultado, llm_usado_texto):
                         
                         st.caption(f"⏱️ {datos['tiempo_ms']} ms")
                 else:
-                    st.warning(f"⚠️ {modelo}: No se generaron eslóganes. Error: {datos.get('error', 'Desconocido')}")
+                    st.warning(f"⚠️ {modelo}: {datos.get('error', 'Error desconocido')}")
         else:
-            st.error("❌ No se encontró la clave 'eslogans' en la respuesta del servidor")
-            st.info("Esto puede deberse a que el backend no generó eslóganes para este LLM. Verifica los logs de Render.")
+            st.info("No hay datos de eslóganes disponibles")
+
 
 # ==================== LÓGICA PRINCIPAL ====================
 if generar:
