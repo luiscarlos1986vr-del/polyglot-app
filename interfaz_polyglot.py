@@ -223,103 +223,86 @@ with col_btn2:
 
 # ==================== FUNCIONES DE VISUALIZACIÓN ====================
 
-
 def mostrar_comparacion(resultado, mercado_seleccionado_nombre):
-    """Muestra los resultados de los 3 LLMs lado a lado para comparar"""
+    """Muestra los resultados de los 3 LLMs lado a lado para comparar - ESTILO SUTIL"""
     
     st.markdown("---")
     st.markdown("## 🏆 Comparación de Motores de IA")
-    st.markdown("Selecciona la mejor opción para tu campaña")
     
-    # Verificar que hay datos de post
     if "post" not in resultado["contenido"]:
         st.warning("No hay datos de post para comparar")
         return
     
     posts = resultado["contenido"]["post"]
     
-    # Íconos y colores
     llm_iconos = {
         "Deepseek": "🔍",
         "Mistral": "🌊",
         "Gemini": "🤖"
     }
     
-    colores = {
-        "Deepseek": "#00C9FF",
-        "Mistral": "#FF6B6B",
-        "Gemini": "#92FE9D"
-    }
-    
     col1, col2, col3 = st.columns(3)
-    columnas = [col1, col2, col3]
     llms_orden = ["Deepseek", "Mistral", "Gemini"]
     
-    if 'seleccionado' not in st.session_state:
-        st.session_state.seleccionado = None
-    
     for idx, llm_nombre in enumerate(llms_orden):
-        with columnas[idx]:
+        with [col1, col2, col3][idx]:
             datos_post = posts.get(llm_nombre, {})
             icono = llm_iconos.get(llm_nombre, "🤖")
-            color = colores.get(llm_nombre, "#00C9FF")
             
-            # Mostrar datos del POST
             if datos_post.get("exito"):
-                if st.session_state.seleccionado == llm_nombre:
-                    st.markdown(f'<div class="winner-badge" style="background: linear-gradient(135deg, #FFD700, #FFA500);">⭐ SELECCIONADO PARA LA CAMPAÑA ⭐</div>', unsafe_allow_html=True)
-                
-                st.markdown(f'''
-                <div class="llm-card" style="border-top: 3px solid {color};">
-                    <div class="llm-icon">{icono}</div>
-                    <div class="llm-name">{llm_nombre}</div>
-                    <div class="llm-time">⏱️ {datos_post.get("tiempo_ms", 0)} ms</div>
-                ''', unsafe_allow_html=True)
+                # Tarjeta con estilo sutil
+                st.markdown(f"""
+                <div style="
+                    background: rgba(30, 30, 46, 0.5);
+                    border-radius: 12px;
+                    padding: 0.8rem;
+                    margin: 0.5rem 0;
+                    border: 1px solid #2a2a3e;
+                    transition: all 0.2s ease;
+                ">
+                    <div style="font-size: 1.8rem; text-align: center; opacity: 0.7;">{icono}</div>
+                    <div style="text-align: center; font-size: 1rem; font-weight: 500; color: #b0b0b0; margin: 0.3rem 0;">{llm_nombre}</div>
+                    <div style="text-align: center; font-size: 0.7rem; color: #666; border-bottom: 1px solid #2a2a3e; padding-bottom: 0.5rem; margin-bottom: 0.5rem;">⏱️ {datos_post.get("tiempo_ms", 0)} ms</div>
+                </div>
+                """, unsafe_allow_html=True)
                 
                 respuesta_post = datos_post.get("respuesta", "")
                 traduccion_post = datos_post.get("traduccion", "")
                 
-                with st.expander("📱 Ver post generado", expanded=True):
-                    st.markdown("**🌐 Original (Post):**")
-                    st.write(respuesta_post)
+                with st.expander("📱 Ver post generado", expanded=False):
+                    st.markdown("**🌐 Original:**")
+                    st.write(respuesta_post[:300] + "..." if len(respuesta_post) > 300 else respuesta_post)
                     if traduccion_post:
                         st.markdown("---")
-                        st.markdown("**🇪🇸 Traducción al español (Post):**")
-                        st.write(traduccion_post)
+                        st.markdown("**🇪🇸 Traducción:**")
+                        st.write(traduccion_post[:300] + "..." if len(traduccion_post) > 300 else traduccion_post)
                 
-                # ✅ NUEVO: Mostrar ESLÓGANES del mismo LLM
+                # Mostrar eslóganes
                 if "eslogans" in resultado["contenido"]:
                     datos_eslogans = resultado["contenido"]["eslogans"].get(llm_nombre, {})
                     if datos_eslogans.get("exito"):
-                        with st.expander("💡 Ver eslóganes generados", expanded=False):
-                            st.markdown("**🌐 Original (Eslóganes):**")
+                        with st.expander("💡 Ver eslóganes", expanded=False):
+                            st.markdown("**🌐 Original:**")
                             st.write(datos_eslogans.get("respuesta", ""))
                             if datos_eslogans.get("traduccion"):
                                 st.markdown("---")
-                                st.markdown("**🇪🇸 Traducción al español (Eslóganes):**")
+                                st.markdown("**🇪🇸 Traducción:**")
                                 st.write(datos_eslogans.get("traduccion"))
-                    else:
-                        st.caption("⚠️ No se generaron eslóganes")
-                
-                # Botón de selección
-                if st.button(f"✨ Elegir {llm_nombre}", key=f"select_{llm_nombre}", use_container_width=True):
-                    st.session_state.seleccionado = llm_nombre
-                    st.success(f"🎉 ¡Has seleccionado **{llm_nombre}** para la campaña de {mercado_seleccionado_nombre}!")
-                    st.balloons()
-                    st.rerun()
-                
-                st.markdown('</div>', unsafe_allow_html=True)
             else:
-                st.markdown(f'''
-                <div class="llm-card">
-                    <div class="llm-icon">{icono}</div>
-                    <div class="llm-name">{llm_nombre}</div>
-                ''', unsafe_allow_html=True)
-                st.error(f"❌ Error en post: {datos_post.get('error', 'Desconocido')}")
-                st.markdown('</div>', unsafe_allow_html=True)
-    
-    if st.session_state.seleccionado:
-        st.success(f"📌 **Campaña confirmada con {st.session_state.seleccionado} para {mercado_seleccionado_nombre}**")
+                st.markdown(f"""
+                <div style="
+                    background: rgba(30, 30, 46, 0.3);
+                    border-radius: 12px;
+                    padding: 0.8rem;
+                    text-align: center;
+                    border: 1px solid #2a2a3e;
+                ">
+                    <div style="font-size: 1.8rem; opacity: 0.5;">{icono}</div>
+                    <div style="color: #888;">{llm_nombre}</div>
+                </div>
+                """, unsafe_allow_html=True)
+                st.error(f"Error: {datos_post.get('error', 'Desconocido')}")
+
 
 
 
