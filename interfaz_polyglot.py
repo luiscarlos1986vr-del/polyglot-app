@@ -213,6 +213,7 @@ with col_btn2:
 
 # ==================== FUNCIONES DE VISUALIZACIÓN ====================
 
+
 def mostrar_comparacion(resultado, mercado_seleccionado_nombre):
     """Muestra los resultados de los 3 LLMs lado a lado para comparar"""
     
@@ -220,13 +221,14 @@ def mostrar_comparacion(resultado, mercado_seleccionado_nombre):
     st.markdown("## 🏆 Comparación de Motores de IA")
     st.markdown("Selecciona la mejor opción para tu campaña")
     
+    # Verificar que hay datos de post
     if "post" not in resultado["contenido"]:
         st.warning("No hay datos de post para comparar")
         return
     
     posts = resultado["contenido"]["post"]
     
-    # Íconos para cada LLM (usando emojis para simplicidad)
+    # Íconos y colores
     llm_iconos = {
         "Deepseek": "🔍",
         "Mistral": "🌊",
@@ -248,11 +250,12 @@ def mostrar_comparacion(resultado, mercado_seleccionado_nombre):
     
     for idx, llm_nombre in enumerate(llms_orden):
         with columnas[idx]:
-            datos = posts.get(llm_nombre, {})
+            datos_post = posts.get(llm_nombre, {})
             icono = llm_iconos.get(llm_nombre, "🤖")
             color = colores.get(llm_nombre, "#00C9FF")
             
-            if datos.get("exito"):
+            # Mostrar datos del POST
+            if datos_post.get("exito"):
                 if st.session_state.seleccionado == llm_nombre:
                     st.markdown(f'<div class="winner-badge" style="background: linear-gradient(135deg, #FFD700, #FFA500);">⭐ SELECCIONADO PARA LA CAMPAÑA ⭐</div>', unsafe_allow_html=True)
                 
@@ -260,24 +263,36 @@ def mostrar_comparacion(resultado, mercado_seleccionado_nombre):
                 <div class="llm-card" style="border-top: 3px solid {color};">
                     <div class="llm-icon">{icono}</div>
                     <div class="llm-name">{llm_nombre}</div>
-                    <div class="llm-time">⏱️ {datos.get("tiempo_ms", 0)} ms</div>
+                    <div class="llm-time">⏱️ {datos_post.get("tiempo_ms", 0)} ms</div>
                 ''', unsafe_allow_html=True)
                 
-                respuesta = datos.get("respuesta", "")
-                traduccion = datos.get("traduccion", "")
+                respuesta_post = datos_post.get("respuesta", "")
+                traduccion_post = datos_post.get("traduccion", "")
                 
                 with st.expander("📱 Ver post generado", expanded=True):
-                    st.markdown("**🌐 Original:**")
-                    st.write(respuesta)
-                    
-                    if traduccion:
+                    st.markdown("**🌐 Original (Post):**")
+                    st.write(respuesta_post)
+                    if traduccion_post:
                         st.markdown("---")
-                        st.markdown("**🇪🇸 Traducción al español:**")
-                        st.write(traduccion)
-                    else:
-                        st.caption("⚠️ Traducción no disponible")
+                        st.markdown("**🇪🇸 Traducción al español (Post):**")
+                        st.write(traduccion_post)
                 
-                if st.button(f"✅ Seleccionar {llm_nombre}", key=f"select_{llm_nombre}", use_container_width=True):
+                # ✅ NUEVO: Mostrar ESLÓGANES del mismo LLM
+                if "eslogans" in resultado["contenido"]:
+                    datos_eslogans = resultado["contenido"]["eslogans"].get(llm_nombre, {})
+                    if datos_eslogans.get("exito"):
+                        with st.expander("💡 Ver eslóganes generados", expanded=False):
+                            st.markdown("**🌐 Original (Eslóganes):**")
+                            st.write(datos_eslogans.get("respuesta", ""))
+                            if datos_eslogans.get("traduccion"):
+                                st.markdown("---")
+                                st.markdown("**🇪🇸 Traducción al español (Eslóganes):**")
+                                st.write(datos_eslogans.get("traduccion"))
+                    else:
+                        st.caption("⚠️ No se generaron eslóganes")
+                
+                # Botón de selección
+                if st.button(f"✨ Elegir {llm_nombre}", key=f"select_{llm_nombre}", use_container_width=True):
                     st.session_state.seleccionado = llm_nombre
                     st.success(f"🎉 ¡Has seleccionado **{llm_nombre}** para la campaña de {mercado_seleccionado_nombre}!")
                     st.balloons()
@@ -290,11 +305,12 @@ def mostrar_comparacion(resultado, mercado_seleccionado_nombre):
                     <div class="llm-icon">{icono}</div>
                     <div class="llm-name">{llm_nombre}</div>
                 ''', unsafe_allow_html=True)
-                st.error(f"❌ Error: {datos.get('error', 'Desconocido')}")
+                st.error(f"❌ Error en post: {datos_post.get('error', 'Desconocido')}")
                 st.markdown('</div>', unsafe_allow_html=True)
     
     if st.session_state.seleccionado:
         st.success(f"📌 **Campaña confirmada con {st.session_state.seleccionado} para {mercado_seleccionado_nombre}**")
+
 
 def mostrar_resultados_normales(resultado, llm_usado_texto):
     """Muestra los resultados en pestañas (modo normal)"""
