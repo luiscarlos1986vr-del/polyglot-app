@@ -185,7 +185,7 @@ def consultar_mistral(prompt, temperatura=0.7):
         "Content-Type": "application/json"
     }
     data = {
-        "model": "mistral-nemo",  # Usar modelo más económico
+        "model": "mistral-small-latest",  # Usar modelo más económico
         "messages": [{"role": "user", "content": prompt}],
         "temperature": temperatura,
         "max_tokens": 500
@@ -233,7 +233,7 @@ def consultar_mistral_eslogans(prompt, temperatura=0.8):
         "Content-Type": "application/json"
     }
     data = {
-        "model": "mistral-nemo",
+        "model": "mistral-small-latest",
         "messages": [{"role": "user", "content": prompt}],
         "temperature": temperatura,
         "max_tokens": 300
