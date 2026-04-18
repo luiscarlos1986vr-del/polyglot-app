@@ -1,71 +1,26 @@
 # -*- coding: utf-8 -*-
 """
-estructura_servicios_poliglot
-.py - Capa de Servicios del Proyecto Polyglot
-Creado: 2026-04-08
-@author: user1 (Arquitectura)
-
-PROPÓSITO: Este archivo contiene toda la lógica de negocio del proyecto.
-           Comunica la interfaz (frontend) con los modelos de IA (backend).
-           
-           PARA TU COMPAÑERO (INTERFAZ): 
-           Solo necesita llamar a las funciones de este archivo,
-           NO necesita entender cómo funcionan internamente.
+estructura_servicios_poliglot.py - Capa de Servicios del Proyecto Polyglot
 """
 
-# ✅ Conservado - Importación de librerías base
 import os
-import time  # NUEVO: Para medir tiempos de respuesta
+import time
 from dotenv import load_dotenv
-from openai import OpenAI  # Deepseek
-from mistralai.client import Mistral  # Mistral
-from google import genai  # Gemini
+from openai import OpenAI
+from mistralai.client import Mistral
+from google import genai
 
 # ==================== CONFIGURACIÓN INICIAL ====================
-# ✅ Conservado - Cargar variables del archivo .env
+# Cargar variables del archivo .env
 load_dotenv()
 
-
-# ... tus imports ...
-from dotenv import load_dotenv
-import os
-
-# ==================== CARGA FORZADA DE VARIABLES ====================
-# Cargar .env local normalmente
-load_dotenv()
-
-# --- DIAGNÓSTICO: Veremos qué clave se está cargando ---
-mistral_key_env = os.getenv("MISTRAL_API_KEY")
-print(f"🔍 [DIAGNÓSTICO] MISTRAL_API_KEY leída desde os.getenv(): {'*' * 10 if mistral_key_env else 'NO ENCONTRADA'}...")
-
-# --- FUERZA BRUTA: Si la clave no es la correcta, la reemplazamos ---
-# <<< --- AQUÍ DEBES PEGAR TU NUEVA CLAVE COMPLETA DE MISTRAL --- >>>
-NUEVA_CLAVE_MISTRAL_PAGO = "kxl1akJy3go..." # <--- ¡PEGA AQUÍ TU CLAVE REAL!
-
-# Si la clave cargada no empieza como la nueva (ej: "kxl1ak..."), la reemplazamos
-if mistral_key_env and not mistral_key_env.startswith("kxl1ak"):
-    print("⚠️ [DIAGNÓSTICO] Se detectó una clave antigua. ¡Reemplazando por la clave de pago!")
-    MISTRAL_API_KEY = NUEVA_CLAVE_MISTRAL_PAGO
-    # También forzamos el cambio en el entorno por si acaso
-    os.environ["MISTRAL_API_KEY"] = MISTRAL_API_KEY
-else:
-    MISTRAL_API_KEY = mistral_key_env
-    print("✅ [DIAGNÓSTICO] La clave cargada parece ser la correcta.")
-
-print(f"🔑 [DIAGNÓSTICO] Clave que usará el código: {MISTRAL_API_KEY[:10] if MISTRAL_API_KEY else 'NO EXISTE'}...")
-# ================================================================
-
-# ... el resto de tu código (MERCADOS, funciones, etc.) ...
-
-
-
-# ✅ Conservado - Configuración de API keys
+# Configuración de API keys
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 TIMEOUT = int(os.getenv("TIMEOUT", 30))
 
-# ✅ Conservado - Validación de keys
+# Validación de keys
 if not all([DEEPSEEK_API_KEY, MISTRAL_API_KEY, GEMINI_API_KEY]):
     missing = []
     if not DEEPSEEK_API_KEY: missing.append("DEEPSEEK_API_KEY")
@@ -73,75 +28,53 @@ if not all([DEEPSEEK_API_KEY, MISTRAL_API_KEY, GEMINI_API_KEY]):
     if not GEMINI_API_KEY: missing.append("GEMINI_API_KEY")
     raise ValueError(f"Faltan keys en .env: {', '.join(missing)}")
 
-
-# ✅ Conservado - Inicializar clientes
-
-# Cliente Deepseek
+# Inicializar clientes
 deepseek_client = OpenAI(
     api_key=DEEPSEEK_API_KEY,
     base_url="https://api.deepseek.com",
     timeout=TIMEOUT
 )
 
-# Cliente Mistral
 mistral_client = Mistral(
     api_key=MISTRAL_API_KEY,
     timeout_ms=TIMEOUT * 1000
 )
 
-# Cliente Gemini
 gemini_client = genai.Client(api_key=GEMINI_API_KEY)
 
-# ✅ Conservado - Comprobación
 print("✅ Todos los clientes inicializados correctamente")
 
 
 # ==================== CONFIGURACIÓN DE MERCADOS ====================
-# REQUISITO 3: Localización para Japón, Alemania y Brasil
-# Diccionario con instrucciones culturales para cada mercado
 MERCADOS = {
     "japon": {
-        "codigo_idioma": "ja",  # Código ISO para japonés
+        "codigo_idioma": "ja",
         "nombre_pais": "Japón",
         "tono": "formal, respetuoso y con énfasis en la calidad y precisión",
         "referencias_culturales": "valoran la armonía, la cortesía y la estética minimalista",
-        "saludo": "株式会社Global-Gadgetsをご覧いただきありがとうございます"  # "Gracias por visitar Global-Gadgets"
+        "saludo": "株式会社Global-Gadgetsをご覧いただきありがとうございます"
     },
     "alemania": {
         "codigo_idioma": "de",
         "nombre_pais": "Alemania",
         "tono": "directo, profesional y enfocado en datos técnicos y eficiencia",
         "referencias_culturales": "valoran la puntualidad, la precisión y la documentación clara",
-        "saludo": "Sehr geehrte Kundin, sehr geehrter Kunde"  # "Estimado cliente"
+        "saludo": "Sehr geehrte Kundin, sehr geehrter Kunde"
     },
     "brasil": {
         "codigo_idioma": "pt-BR",
         "nombre_pais": "Brasil",
         "tono": "cálido, enérgico y con entusiasmo, usando un lenguaje cercano",
         "referencias_culturales": "valoran la calidez humana, el carnaval y el fútbol",
-        "saludo": "Olá! Bem-vindo à Global-Gadgets"  # "¡Hola! Bienvenido a Global-Gadgets"
+        "saludo": "Olá! Bem-vindo à Global-Gadgets"
     }
 }
 
 
 # ==================== CONSTRUCCIÓN DE PROMPTS ====================
-# Estas funciones construyen las instrucciones que se enviarán a los LLMs
-
 def construir_prompt_post(descripcion_producto, mercado):
-    """
-    REQUISITO 2: Construye el prompt para generar un post de redes sociales (formato Twitter/X)
-    
-    Args:
-        descripcion_producto (str): Descripción del producto en español/inglés
-        mercado (str): Clave del mercado ('japon', 'alemania', 'brasil')
-    
-    Returns:
-        str: Prompt completo para enviar al LLM
-    """
     config = MERCADOS[mercado]
-    
-    # El prompt incluye instrucciones específicas de formato y cultura
-    prompt = f"""
+    return f"""
     Actúa como un experto en marketing localizado para {config['nombre_pais']}.
     
     TAREA: Crear un post para redes sociales (estilo Twitter/X) sobre el siguiente producto.
@@ -158,23 +91,11 @@ def construir_prompt_post(descripcion_producto, mercado):
     
     Responde ÚNICAMENTE con el texto del post, sin explicaciones adicionales.
     """
-    return prompt
 
 
 def construir_prompt_email(descripcion_producto, mercado):
-    """
-    REQUISITO 2: Construye el prompt para generar un email promocional
-    
-    Args:
-        descripcion_producto (str): Descripción del producto
-        mercado (str): Clave del mercado
-    
-    Returns:
-        str: Prompt completo para el email
-    """
     config = MERCADOS[mercado]
-    
-    prompt = f"""
+    return f"""
     Actúa como un redactor de email marketing especializado en {config['nombre_pais']}.
     
     TAREA: Escribir un email promocional en IDIOMA {config['codigo_idioma']}.
@@ -197,17 +118,11 @@ def construir_prompt_email(descripcion_producto, mercado):
     ASUNTO: [texto del asunto]
     CUERPO: [texto del email]
     """
-    return prompt
 
 
 def construir_prompt_eslogans(descripcion_producto, mercado):
-    """
-    REQUISITO 2: Construye el prompt para generar 3 eslóganes publicitarios
-    VERSIÓN MEJORADA - ESPECÍFICA PARA MISTRAL
-    """
     config = MERCADOS[mercado]
-    
-    prompt = f"""
+    return f"""
 Eres un experto creativo publicitario especializado en el mercado de {config['nombre_pais']}.
 
 Tu tarea es generar EXACTAMENTE 3 eslóganes publicitarios para el siguiente producto:
@@ -231,104 +146,23 @@ Ejemplo de formato correcto:
 
 Ahora genera los 3 eslóganes para el producto indicado, siguiendo EXACTAMENTE el formato del ejemplo.
 """
-    return prompt
 
 
-def consultar_mistral_eslogans(prompt, temperatura=0.7):
-    """
-    Versión especial de Mistral para eslóganes con manejo de errores mejorado
-    """
-    import requests
-    inicio = time.time()
-    
-    url = "https://api.mistral.ai/v1/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {MISTRAL_API_KEY}",
-        "Content-Type": "application/json"
-    }
-    
-    # Aumentar max_tokens para eslóganes
-    data = {
-        "model": "mistral-large-latest",
-        "messages": [{"role": "user", "content": prompt}],
-        "temperature": 0.8,  # Más creativo para eslóganes
-        "max_tokens": 300
-    }
-    
-    try:
-        response = requests.post(url, headers=headers, json=data, timeout=TIMEOUT)
-        tiempo_ms = int((time.time() - inicio) * 1000)
-        
-        if response.status_code == 200:
-            resultado = response.json()
-            contenido = resultado["choices"][0]["message"]["content"]
-            
-            # Verificar que el contenido no esté vacío
-            if not contenido or len(contenido.strip()) < 10:
-                return {
-                    "exito": False,
-                    "respuesta": None,
-                    "error": "Respuesta vacía o muy corta de Mistral",
-                    "tiempo_ms": tiempo_ms,
-                    "modelo": "Mistral"
-                }
-            
-            return {
-                "exito": True,
-                "respuesta": contenido,
-                "error": None,
-                "tiempo_ms": tiempo_ms,
-                "modelo": "Mistral"
-            }
-        else:
-            return {
-                "exito": False,
-                "respuesta": None,
-                "error": f"HTTP {response.status_code}: {response.text[:200]}",
-                "tiempo_ms": tiempo_ms,
-                "modelo": "Mistral"
-            }
-    except Exception as e:
-        tiempo_ms = int((time.time() - inicio) * 1000)
-        return {
-            "exito": False,
-            "respuesta": None,
-            "error": str(e),
-            "tiempo_ms": tiempo_ms,
-            "modelo": "Mistral"
-        }
-
-
-# ==================== FUNCIONES DE CONSULTA A LLMs ====================
-# REQUISITO 1: Conectividad Multi-LLM
-# Cada función se comunica con un LLM específico
-
+# ==================== FUNCIONES DE CONSULTA ====================
 def consultar_deepseek(prompt, temperatura=0.7):
-    """
-    Envía un prompt a Deepseek y retorna la respuesta.
-    
-    Args:
-        prompt (str): Instrucción para el modelo
-        temperatura (float): Creatividad (0.0 = más preciso, 1.0 = más creativo)
-    
-    Returns:
-        dict: {'exito': bool, 'respuesta': str, 'error': str (si existe), 'tiempo_ms': int}
-    """
     inicio = time.time()
     try:
         respuesta = deepseek_client.chat.completions.create(
-            model="deepseek-chat",  # Modelo gratuito/eficiente
+            model="deepseek-chat",
             messages=[{"role": "user", "content": prompt}],
             temperature=temperatura,
-            max_tokens=500  # Suficiente para posts/emails cortos
+            max_tokens=500
         )
-        tiempo_ms = int((time.time() - inicio) * 1000)
-        
         return {
             "exito": True,
             "respuesta": respuesta.choices[0].message.content,
             "error": None,
-            "tiempo_ms": tiempo_ms,
+            "tiempo_ms": int((time.time() - inicio) * 1000),
             "modelo": "Deepseek"
         }
     except Exception as e:
@@ -342,10 +176,6 @@ def consultar_deepseek(prompt, temperatura=0.7):
 
 
 def consultar_mistral(prompt, temperatura=0.7):
-    """
-    Envía un prompt a Mistral usando requests directos.
-    Más confiable que el SDK.
-    """
     import requests
     inicio = time.time()
     
@@ -355,7 +185,7 @@ def consultar_mistral(prompt, temperatura=0.7):
         "Content-Type": "application/json"
     }
     data = {
-        "model": "mistral-large-latest",
+        "model": "mistral-nemo",  # Usar modelo más económico
         "messages": [{"role": "user", "content": prompt}],
         "temperature": temperatura,
         "max_tokens": 500
@@ -384,37 +214,76 @@ def consultar_mistral(prompt, temperatura=0.7):
                 "modelo": "Mistral"
             }
     except Exception as e:
-        tiempo_ms = int((time.time() - inicio) * 1000)
         return {
             "exito": False,
             "respuesta": None,
             "error": str(e),
-            "tiempo_ms": tiempo_ms,
+            "tiempo_ms": int((time.time() - inicio) * 1000),
+            "modelo": "Mistral"
+        }
+
+
+def consultar_mistral_eslogans(prompt, temperatura=0.8):
+    import requests
+    inicio = time.time()
+    
+    url = "https://api.mistral.ai/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {MISTRAL_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "model": "mistral-nemo",
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": temperatura,
+        "max_tokens": 300
+    }
+    
+    try:
+        response = requests.post(url, headers=headers, json=data, timeout=TIMEOUT)
+        tiempo_ms = int((time.time() - inicio) * 1000)
+        
+        if response.status_code == 200:
+            resultado = response.json()
+            contenido = resultado["choices"][0]["message"]["content"]
+            return {
+                "exito": True,
+                "respuesta": contenido,
+                "error": None,
+                "tiempo_ms": tiempo_ms,
+                "modelo": "Mistral"
+            }
+        else:
+            return {
+                "exito": False,
+                "respuesta": None,
+                "error": f"HTTP {response.status_code}",
+                "tiempo_ms": tiempo_ms,
+                "modelo": "Mistral"
+            }
+    except Exception as e:
+        return {
+            "exito": False,
+            "respuesta": None,
+            "error": str(e),
+            "tiempo_ms": int((time.time() - inicio) * 1000),
             "modelo": "Mistral"
         }
 
 
 def consultar_gemini(prompt, temperatura=0.7):
-    """
-    Envía un prompt a Gemini y retorna la respuesta.
-    """
     inicio = time.time()
     try:
         respuesta = gemini_client.models.generate_content(
-            model="gemini-2.5-flash-lite",  # Rápido y económico
+            model="gemini-2.5-flash-lite",
             contents=prompt,
-            config={
-                "temperature": temperatura,
-                "max_output_tokens": 500
-            }
+            config={"temperature": temperatura, "max_output_tokens": 500}
         )
-        tiempo_ms = int((time.time() - inicio) * 1000)
-        
         return {
             "exito": True,
             "respuesta": respuesta.text,
             "error": None,
-            "tiempo_ms": tiempo_ms,
+            "tiempo_ms": int((time.time() - inicio) * 1000),
             "modelo": "Gemini"
         }
     except Exception as e:
@@ -428,29 +297,10 @@ def consultar_gemini(prompt, temperatura=0.7):
 
 
 # ==================== FUNCIÓN PRINCIPAL ====================
-# REQUISITO 4: Permite seleccionar qué LLM usar o comparar todos
-
 def generar_campana_completa(descripcion_producto, mercado, llm_seleccionado="todos"):
-    """
-    REQUISITOS 2 y 3: Genera TODO el contenido de marketing para un mercado específico.
-    
-    Args:
-        descripcion_producto (str): Descripción del producto
-        mercado (str): 'japon', 'alemania', o 'brasil'
-        llm_seleccionado (str): 'deepseek', 'mistral', 'gemini', o 'todos'
-    
-    Returns:
-        dict: Estructura completa con todo el contenido generado
-    """
-    
-    # Validar que el mercado existe
     if mercado not in MERCADOS:
-        return {
-            "exito": False,
-            "error": f"Mercado '{mercado}' no válido. Opciones: {list(MERCADOS.keys())}"
-        }
+        return {"exito": False, "error": f"Mercado '{mercado}' no válido"}
     
-    # Seleccionar las funciones de consulta según el LLM elegido
     consultas_disponibles = {
         "deepseek": consultar_deepseek,
         "mistral": consultar_mistral,
@@ -464,19 +314,14 @@ def generar_campana_completa(descripcion_producto, mercado, llm_seleccionado="to
         llms_a_usar = [consultas_disponibles[llm_seleccionado]]
         modo = "single"
     else:
-        return {
-            "exito": False,
-            "error": f"LLM '{llm_seleccionado}' no válido. Opciones: 'deepseek', 'mistral', 'gemini', 'todos'"
-        }
+        return {"exito": False, "error": f"LLM '{llm_seleccionado}' no válido"}
     
-    # Construir los prompts para cada tipo de contenido
     prompts = {
         "post": construir_prompt_post(descripcion_producto, mercado),
         "email": construir_prompt_email(descripcion_producto, mercado),
         "eslogans": construir_prompt_eslogans(descripcion_producto, mercado)
     }
     
-    # Diccionario para almacenar resultados
     resultados = {
         "exito": True,
         "mercado": mercado,
@@ -487,25 +332,18 @@ def generar_campana_completa(descripcion_producto, mercado, llm_seleccionado="to
         "contenido": {}
     }
     
-    # Para cada tipo de contenido, consultar a cada LLM
     for tipo_contenido, prompt in prompts.items():
         resultados["contenido"][tipo_contenido] = {}
-        
         for consulta_func in llms_a_usar:
-            # Obtener nombre del modelo para usarlo como clave
             prueba = consulta_func("Di hola")
             nombre_modelo = prueba.get("modelo", "desconocido")
             
-            # ⭐ USAR FUNCIÓN ESPECIAL PARA ESLÓGANES DE MISTRAL ⭐
             if tipo_contenido == "eslogans" and nombre_modelo == "Mistral":
                 respuesta = consultar_mistral_eslogans(prompt)
             else:
                 respuesta = consulta_func(prompt)
             
-            # Obtener el texto de la respuesta
             respuesta_texto = respuesta.get("respuesta")
-            
-            # Traducir al español si la respuesta es exitosa
             traduccion = None
             if respuesta.get("exito") and respuesta_texto:
                 codigo_idioma = MERCADOS[mercado]["codigo_idioma"]
@@ -522,23 +360,37 @@ def generar_campana_completa(descripcion_producto, mercado, llm_seleccionado="to
     return resultados
 
 
-# ==================== FUNCIÓN COMPARATIVA RÁPIDA ====================
-# REQUISITO 4 (Avanzado): Compara LLMs para un tipo de contenido específico
+# ==================== TRADUCCIÓN ====================
+def traducir_a_espanol(texto, idioma_origen):
+    if not texto:
+        return "⚠️ No hay texto para traducir"
+    
+    idiomas = {"ja": "japonés", "de": "alemán", "pt-BR": "portugués de Brasil"}
+    nombre_idioma = idiomas.get(idioma_origen, "el idioma original")
+    
+    prompt_traduccion = f"Traduce el siguiente texto del {nombre_idioma} al español. Mantén el tono original. Responde SOLO con la traducción:\n\n{texto}"
+    
+    try:
+        respuesta = gemini_client.models.generate_content(
+            model="gemini-2.5-flash-lite",
+            contents=prompt_traduccion,
+            config={"temperature": 0.3, "max_output_tokens": 800}
+        )
+        return respuesta.text.strip()
+    except:
+        try:
+            respuesta = deepseek_client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[{"role": "user", "content": prompt_traduccion}],
+                temperature=0.3,
+                max_tokens=800
+            )
+            return respuesta.choices[0].message.content.strip()
+        except:
+            return f"❌ Error en traducción"
+
 
 def comparar_llms_para_contenido(descripcion_producto, mercado, tipo_contenido="post"):
-    """
-    REQUISITO 4: Envía el mismo prompt a TODOS los LLMs y permite comparar resultados.
-    
-    Args:
-        descripcion_producto (str): Descripción del producto
-        mercado (str): 'japon', 'alemania', 'brasil'
-        tipo_contenido (str): 'post', 'email', o 'eslogans'
-    
-    Returns:
-        dict: Respuestas de todos los LLMs para comparar lado a lado
-    """
-    
-    # Seleccionar el constructor de prompt adecuado
     constructores = {
         "post": construir_prompt_post,
         "email": construir_prompt_email,
@@ -546,15 +398,10 @@ def comparar_llms_para_contenido(descripcion_producto, mercado, tipo_contenido="
     }
     
     if tipo_contenido not in constructores:
-        return {
-            "exito": False,
-            "error": f"Tipo de contenido '{tipo_contenido}' no válido. Opciones: post, email, eslogans"
-        }
+        return {"exito": False, "error": f"Tipo '{tipo_contenido}' no válido"}
     
-    # Construir el prompt
     prompt = constructores[tipo_contenido](descripcion_producto, mercado)
     
-    # Consultar a los 3 LLMs
     resultados = {
         "exito": True,
         "mercado": mercado,
@@ -563,15 +410,8 @@ def comparar_llms_para_contenido(descripcion_producto, mercado, tipo_contenido="
         "respuestas": {}
     }
     
-    # Lista de LLMs a consultar
-    llms = [
-        ("Deepseek", consultar_deepseek),
-        ("Mistral", consultar_mistral),
-        ("Gemini", consultar_gemini)
-    ]
-    
-    for nombre, consulta_func in llms:
-        respuesta = consulta_func(prompt)
+    for nombre, func in [("Deepseek", consultar_deepseek), ("Mistral", consultar_mistral), ("Gemini", consultar_gemini)]:
+        respuesta = func(prompt)
         resultados["respuestas"][nombre] = {
             "respuesta": respuesta.get("respuesta"),
             "exito": respuesta.get("exito"),
@@ -582,135 +422,11 @@ def comparar_llms_para_contenido(descripcion_producto, mercado, tipo_contenido="
     return resultados
 
 
-# ==================== FUNCIÓN DE TRADUCCIÓN ====================
-def traducir_a_espanol(texto, idioma_origen):
-    """
-    Traduce un texto del idioma origen al español.
-    Usa Gemini como primera opción, con respaldo en Deepseek si falla.
-    
-    Args:
-        texto (str): Texto a traducir
-        idioma_origen (str): 'ja', 'de', 'pt-BR'
-    
-    Returns:
-        str: Texto traducido al español
-    """
-    if not texto:
-        return "⚠️ No hay texto para traducir"
-    
-    # Mapeo de idiomas para el prompt
-    idiomas = {
-        "ja": "japonés",
-        "de": "alemán",
-        "pt-BR": "portugués de Brasil"
-    }
-    
-    nombre_idioma = idiomas.get(idioma_origen, "el idioma original")
-    
-    prompt_traduccion = f"""
-    Traduce el siguiente texto del {nombre_idioma} al español.
-    Mantén el tono y estilo original.
-    Responde SOLO con la traducción, sin explicaciones.
-    
-    TEXTO ORIGINAL:
-    {texto}
-    
-    TRADUCCIÓN AL ESPAÑOL:
-    """
-    
-    # Intento 1: Gemini
-    try:
-        respuesta = gemini_client.models.generate_content(
-            model="gemini-2.5-flash-lite",
-            contents=prompt_traduccion,
-            config={"temperature": 0.3, "max_output_tokens": 800}
-        )
-        return respuesta.text.strip()
-    except Exception as e:
-        error_msg = str(e)
-        if "503" in error_msg or "UNAVAILABLE" in error_msg:
-            print("⚠️ Gemini saturado, usando Deepseek como respaldo...")
-        else:
-            print(f"⚠️ Error en Gemini: {error_msg}")
-    
-    # Intento 2: Deepseek (respaldo)
-    try:
-        respuesta = deepseek_client.chat.completions.create(
-            model="deepseek-chat",
-            messages=[{"role": "user", "content": prompt_traduccion}],
-            temperature=0.3,
-            max_tokens=800
-        )
-        return respuesta.choices[0].message.content.strip()
-    except Exception as e:
-        print(f"⚠️ Error en Deepseek: {str(e)}")
-    
-    # Intento 3: Mistral (último respaldo)
-    try:
-        import requests
-        url = "https://api.mistral.ai/v1/chat/completions"
-        headers = {
-            "Authorization": f"Bearer {MISTRAL_API_KEY}",
-            "Content-Type": "application/json"
-        }
-        data = {
-            "model": "mistral-large-latest",
-            "messages": [{"role": "user", "content": prompt_traduccion}],
-            "temperature": 0.3,
-            "max_tokens": 800
-        }
-        response = requests.post(url, headers=headers, json=data, timeout=30)
-        if response.status_code == 200:
-            resultado = response.json()
-            return resultado["choices"][0]["message"]["content"].strip()
-        else:
-            print(f"⚠️ Error Mistral traducción: {response.status_code}")
-    except Exception as e:
-        print(f"⚠️ Error en Mistral traducción: {str(e)}")
-    
-    return f"❌ Error en traducción: No se pudo traducir el texto"
-
-
-# ==================== EJEMPLO DE USO (PARA PRUEBAS) ====================
-# Este bloque solo se ejecuta si corres este archivo directamente
-# NO se ejecuta cuando otro archivo lo importa
-
 if __name__ == "__main__":
-    print("\n" + "="*60)
-    print("🧪 POLYGLOT - PRUEBA DE SERVICIOS")
-    print("="*60)
-    
-    # Producto de ejemplo para pruebas
-    producto_ejemplo = """
-    Auriculares inalámbricos con cancelación de ruido activa, 
-    40 horas de batería y carga rápida (10 minutos = 4 horas de uso).
-    Incluye estuche de carga y 3 tamaños de almohadillas.
-    """
-    
-    print("\n📝 PRODUCTO DE PRUEBA:")
-    print(producto_ejemplo)
-    
-    # Probar generación para Brasil con todos los LLMs
-    print("\n🚀 Generando campaña para BRASIL con TODOS los LLMs...")
-    resultado = generar_campana_completa(producto_ejemplo, "brasil", "todos")
-    
+    print("🧪 Prueba de servicios...")
+    producto = "Auriculares con cancelación de ruido, 40h de batería"
+    resultado = generar_campana_completa(producto, "brasil", "todos")
     if resultado["exito"]:
-        print("\n✅ CONTENIDO GENERADO EXITOSAMENTE")
-        print(f"Mercado: {resultado['configuracion_mercado']['nombre_pais']}")
-        print(f"Modo: {resultado['modo']}")
-        
-        # Mostrar un ejemplo del post generado por Deepseek
-        if "post" in resultado["contenido"] and "Deepseek" in resultado["contenido"]["post"]:
-            print("\n📱 EJEMPLO - POST (Deepseek):")
-            print(resultado["contenido"]["post"]["Deepseek"]["respuesta"][:200] + "...")
-        
-        # Mostrar eslóganes de Mistral si existen
-        if "eslogans" in resultado["contenido"] and "Mistral" in resultado["contenido"]["eslogans"]:
-            print("\n💡 EJEMPLO - ESLÓGANES (Mistral):")
-            print(resultado["contenido"]["eslogans"]["Mistral"]["respuesta"][:200] + "...")
+        print("✅ Prueba exitosa")
     else:
-        print(f"\n❌ Error: {resultado.get('error')}")
-    
-    print("\n" + "="*60)
-    print("✅ Prueba completada. Revisa los resultados.")
-    print("="*60)
+        print(f"❌ Error: {resultado.get('error')}")
