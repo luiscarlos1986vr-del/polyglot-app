@@ -180,7 +180,7 @@ with col1:
     mercado_seleccionado = st.radio(
         "Mercado",
         options=list(mercado_opciones.keys()),
-        index=1,  # Japón seleccionado por defecto
+        index=0,  # Brasil seleccionado por defecto
         label_visibility="collapsed"
     )
     mercado = mercado_opciones[mercado_seleccionado]
