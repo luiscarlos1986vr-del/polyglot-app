@@ -45,17 +45,17 @@ st.markdown("""
     }
     /* Tarjetas de comparación */
     .llm-card {
-        background: linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%);
+        background: rgba(30, 30, 46, 0.7);
         border-radius: 16px;
-        padding: 1.2rem;
-        border: 1px solid #333;
-        transition: transform 0.2s, box-shadow 0.2s;
+        padding: 1rem;
+        border: 1px solid #2a2a3e;
+        transition: all 0.2s ease;
         height: 100%;
     }
     .llm-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-        border-color: #00C9FF;
+        background: rgba(45, 45, 65, 0.8);
+        border-color: #6b9bc2;
+        transform: translateY(-2px);
     }
     .winner-badge {
         background: linear-gradient(135deg, #FFD700, #FFA500);
@@ -68,21 +68,25 @@ st.markdown("""
         margin-bottom: 0.5rem;
     }
     .llm-icon {
-        font-size: 2.5rem;
+        font-size: 2rem;
         text-align: center;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.3rem;
+        opacity: 0.8;
     }
     .llm-name {
         text-align: center;
-        font-size: 1.3rem;
-        font-weight: bold;
-        margin-bottom: 0.5rem;
+        font-size: 1.1rem;
+        font-weight: 500;
+        margin-bottom: 0.3rem;
+        color: #c0c0c0;
     }
     .llm-time {
         text-align: center;
-        font-size: 0.8rem;
+        font-size: 0.7rem;
         color: #888;
-        margin-bottom: 1rem;
+        margin-bottom: 0.8rem;
+        border-bottom: 1px solid #2a2a3e;
+        padding-bottom: 0.5rem;
     }
     .footer {
         text-align: center;
@@ -108,6 +112,12 @@ st.markdown("""
         background: linear-gradient(90deg, #1e7a9e, #35b87a);
         color: white;
         box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+
+    .streamlit-expanderHeader {
+        font-size: 0.85rem;
+        color: #6b9bc2;
+        background: transparent;
     }
     
        /* Ajuste para los radio buttons */
