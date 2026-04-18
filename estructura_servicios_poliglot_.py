@@ -542,18 +542,29 @@ def traducir_a_espanol(texto, idioma_origen):
     except Exception as e:
         print(f"⚠️ Error en Deepseek: {str(e)}")
     
-    # Intento 3: Mistral (último respaldo)
+        # Intento 3: Mistral (último respaldo) - VERSIÓN REQUESTS
     try:
-        respuesta = mistral_client.chat.complete(
-            model="mistral-large-latest",
-            messages=[{"role": "user", "content": prompt_traduccion}],
-            temperature=0.3,
-            max_tokens=800
-        )
-        return respuesta.choices[0].message.content.strip()
+        import requests
+        url = "https://api.mistral.ai/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {MISTRAL_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        data = {
+            "model": "mistral-large-latest",
+            "messages": [{"role": "user", "content": prompt_traduccion}],
+            "temperature": 0.3,
+            "max_tokens": 800
+        }
+        response = requests.post(url, headers=headers, json=data, timeout=30)
+        if response.status_code == 200:
+            resultado = response.json()
+            return resultado["choices"][0]["message"]["content"].strip()
+        else:
+            print(f"⚠️ Error Mistral traducción: {response.status_code}")
     except Exception as e:
-        print(f"❌ Error en todos los motores de traducción: {str(e)}")
-        return f"❌ Error en traducción: {error_msg}"
+        print(f"⚠️ Error en Mistral traducción: {str(e)}")
+
 
 # ==================== EJEMPLO DE USO (PARA PRUEBAS) ====================
 # Este bloque solo se ejecuta si corres este archivo directamente
