@@ -197,6 +197,69 @@ def construir_prompt_eslogans(descripcion_producto, mercado):
     """
     return prompt
 
+def consultar_mistral_eslogans(prompt, temperatura=0.7):
+    """
+    Versión especial de Mistral para eslóganes con manejo de errores mejorado
+    """
+    import requests
+    inicio = time.time()
+    
+    url = "https://api.mistral.ai/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {MISTRAL_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    
+    # Aumentar max_tokens para eslóganes
+    data = {
+        "model": "mistral-large-latest",
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.8,  # Más creativo para eslóganes
+        "max_tokens": 300
+    }
+    
+    try:
+        response = requests.post(url, headers=headers, json=data, timeout=TIMEOUT)
+        tiempo_ms = int((time.time() - inicio) * 1000)
+        
+        if response.status_code == 200:
+            resultado = response.json()
+            contenido = resultado["choices"][0]["message"]["content"]
+            
+            # Verificar que el contenido no esté vacío
+            if not contenido or len(contenido.strip()) < 10:
+                return {
+                    "exito": False,
+                    "respuesta": None,
+                    "error": "Respuesta vacía o muy corta de Mistral",
+                    "tiempo_ms": tiempo_ms,
+                    "modelo": "Mistral"
+                }
+            
+            return {
+                "exito": True,
+                "respuesta": contenido,
+                "error": None,
+                "tiempo_ms": tiempo_ms,
+                "modelo": "Mistral"
+            }
+        else:
+            return {
+                "exito": False,
+                "respuesta": None,
+                "error": f"HTTP {response.status_code}: {response.text[:200]}",
+                "tiempo_ms": tiempo_ms,
+                "modelo": "Mistral"
+            }
+    except Exception as e:
+        tiempo_ms = int((time.time() - inicio) * 1000)
+        return {
+            "exito": False,
+            "respuesta": None,
+            "error": str(e),
+            "tiempo_ms": tiempo_ms,
+            "modelo": "Mistral"
+        }
 
 # ==================== FUNCIONES DE CONSULTA A LLMs ====================
 # REQUISITO 1: Conectividad Multi-LLM
@@ -393,6 +456,13 @@ def generar_campana_completa(descripcion_producto, mercado, llm_seleccionado="to
             # Llamada de prueba para saber qué modelo es
             prueba = consulta_func("Di hola")
             nombre_modelo = prueba.get("modelo", "desconocido")
+
+           ##### eslogan mistral ####    
+           if tipo_contenido == "eslogans" and nombre_modelo == "Mistral":
+                respuesta = consultar_mistral_eslogans(prompt)
+            else:
+                respuesta = consulta_func(prompt)
+                      
             
            # Consulta real
             respuesta = consulta_func(prompt)
