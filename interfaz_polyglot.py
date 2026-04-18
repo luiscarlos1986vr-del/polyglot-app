@@ -121,14 +121,14 @@ st.markdown("""
     
     /* Efecto al pasar el mouse - COLOR MÁS SUAVE */
     div[role="radiogroup"] label:hover {
-        background-color: #3a4a6e !important;
+        background-color: #2a3a4e !important;
         color: white !important;
         transform: translateX(4px);
     }
     
     /* Estilo para la opción SELECCIONADA */
     div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked) {
-        background-color: #2c5a7a !important;
+        background-color: #1e3a4a !important;
         color: white !important;
         font-weight: 500;
         border-left: 3px solid #FFD700;
