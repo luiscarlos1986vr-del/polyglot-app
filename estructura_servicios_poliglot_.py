@@ -240,12 +240,10 @@ def consultar_deepseek(prompt, temperatura=0.7):
         }
 
 def consultar_mistral(prompt, temperatura=0.7):
-    """
-    Envía un prompt a Mistral usando requests directos.
-    Más confiable que el SDK.
-    """
     import requests
     inicio = time.time()
+    
+    print(f"🔍 Mistral - Enviando prompt: {prompt[:100]}...")  # ← LOG
     
     url = "https://api.mistral.ai/v1/chat/completions"
     headers = {
@@ -261,33 +259,35 @@ def consultar_mistral(prompt, temperatura=0.7):
     
     try:
         response = requests.post(url, headers=headers, json=data, timeout=TIMEOUT)
-        tiempo_ms = int((time.time() - inicio) * 1000)
+        print(f"🔍 Mistral - Status code: {response.status_code}")  # ← LOG
         
         if response.status_code == 200:
             resultado = response.json()
             contenido = resultado["choices"][0]["message"]["content"]
+            print(f"🔍 Mistral - Respuesta recibida: {contenido[:100]}...")  # ← LOG
             return {
                 "exito": True,
                 "respuesta": contenido,
                 "error": None,
-                "tiempo_ms": tiempo_ms,
+                "tiempo_ms": int((time.time() - inicio) * 1000),
                 "modelo": "Mistral"
             }
         else:
+            print(f"❌ Mistral - Error HTTP {response.status_code}: {response.text[:200]}")  # ← LOG
             return {
                 "exito": False,
                 "respuesta": None,
-                "error": f"HTTP {response.status_code}: {response.text[:200]}",
-                "tiempo_ms": tiempo_ms,
+                "error": f"HTTP {response.status_code}",
+                "tiempo_ms": int((time.time() - inicio) * 1000),
                 "modelo": "Mistral"
             }
     except Exception as e:
-        tiempo_ms = int((time.time() - inicio) * 1000)
+        print(f"❌ Mistral - Excepción: {str(e)}")  # ← LOG
         return {
             "exito": False,
             "respuesta": None,
             "error": str(e),
-            "tiempo_ms": tiempo_ms,
+            "tiempo_ms": int((time.time() - inicio) * 1000),
             "modelo": "Mistral"
         }
 
