@@ -239,34 +239,35 @@ def consultar_deepseek(prompt, temperatura=0.7):
             "modelo": "Deepseek"
         }
 
-
 def consultar_mistral(prompt, temperatura=0.7):
-    """
-    Envía un prompt a Mistral y retorna la respuesta.
-    """
     inicio = time.time()
     try:
         respuesta = mistral_client.chat.complete(
-            model="mistral-large-latest",  # Modelo potente para marketing
+            model="mistral-large-latest",
             messages=[{"role": "user", "content": prompt}],
             temperature=temperatura,
             max_tokens=500
         )
         tiempo_ms = int((time.time() - inicio) * 1000)
         
+        # ✅ CORRECTO: Mistral devuelve respuesta.choices[0].message.content (es igual que OpenAI)
+        # Pero a veces la estructura es diferente. Usamos este formato más seguro:
+        contenido = respuesta.choices[0].message.content if respuesta.choices else str(respuesta)
+        
         return {
             "exito": True,
-            "respuesta": respuesta.choices[0].message.content,
+            "respuesta": contenido,
             "error": None,
             "tiempo_ms": tiempo_ms,
             "modelo": "Mistral"
         }
     except Exception as e:
+        tiempo_ms = int((time.time() - inicio) * 1000)
         return {
             "exito": False,
             "respuesta": None,
             "error": str(e),
-            "tiempo_ms": int((time.time() - inicio) * 1000),
+            "tiempo_ms": tiempo_ms,
             "modelo": "Mistral"
         }
 
