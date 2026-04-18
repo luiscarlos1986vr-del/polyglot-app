@@ -240,31 +240,32 @@ def consultar_deepseek(prompt, temperatura=0.7):
         }
 
 def consultar_mistral(prompt, temperatura=0.7):
+    """
+    Envía un prompt a Mistral usando requests directos.
+    Más confiable que el SDK.
+    """
+    import requests
     inicio = time.time()
+    
+    url = "https://api.mistral.ai/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {MISTRAL_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "model": "mistral-large-latest",
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": temperatura,
+        "max_tokens": 500
+    }
+    
     try:
-        respuesta = mistral_client.chat.complete(
-            model="mistral-large-latest",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=temperatura,
-            max_tokens=500
-        )
+        response = requests.post(url, headers=headers, json=data, timeout=TIMEOUT)
         tiempo_ms = int((time.time() - inicio) * 1000)
         
-        # ✅ Formato alternativo para Mistral
-        contenido = respuesta.choices[0].message.content
-        
-        return {
-            "exito": True,
-            "respuesta": contenido,
-            "error": None,
-            "tiempo_ms": tiempo_ms,
-            "modelo": "Mistral"
-        }
-    except AttributeError as e:
-        # Si no tiene .choices, intentamos acceder directamente
-        tiempo_ms = int((time.time() - inicio) * 1000)
-        try:
-            contenido = respuesta.message.content if hasattr(respuesta, 'message') else str(respuesta)
+        if response.status_code == 200:
+            resultado = response.json()
+            contenido = resultado["choices"][0]["message"]["content"]
             return {
                 "exito": True,
                 "respuesta": contenido,
@@ -272,11 +273,11 @@ def consultar_mistral(prompt, temperatura=0.7):
                 "tiempo_ms": tiempo_ms,
                 "modelo": "Mistral"
             }
-        except:
+        else:
             return {
                 "exito": False,
                 "respuesta": None,
-                "error": f"Error de formato: {str(e)}",
+                "error": f"HTTP {response.status_code}: {response.text[:200]}",
                 "tiempo_ms": tiempo_ms,
                 "modelo": "Mistral"
             }
