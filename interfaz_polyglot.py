@@ -312,6 +312,7 @@ def mostrar_comparacion(resultado, mercado_seleccionado_nombre):
         st.success(f"📌 **Campaña confirmada con {st.session_state.seleccionado} para {mercado_seleccionado_nombre}**")
 
 
+
 def mostrar_resultados_normales(resultado, llm_usado_texto):
     """Muestra los resultados en pestañas (modo normal)"""
     st.markdown(f"### Resultados generados por {llm_usado_texto}")
@@ -319,6 +320,7 @@ def mostrar_resultados_normales(resultado, llm_usado_texto):
     tab1, tab2, tab3 = st.tabs(["📱 Redes Sociales", "📧 Email Promocional", "🎯 Eslogans"])
     
     with tab1:
+        st.markdown("#### 📱 Post para Redes Sociales")
         if "post" in resultado["contenido"]:
             for modelo, datos in resultado["contenido"]["post"].items():
                 if datos.get("exito"):
@@ -332,12 +334,17 @@ def mostrar_resultados_normales(resultado, llm_usado_texto):
                             st.write(datos["traduccion"])
                         
                         st.caption(f"⏱️ {datos['tiempo_ms']} ms")
+                else:
+                    st.warning(f"⚠️ {modelo}: {datos.get('error', 'Error desconocido')}")
+        else:
+            st.info("No hay datos de post disponibles")
     
     with tab2:
+        st.markdown("#### 📧 Email Promocional")
         if "email" in resultado["contenido"]:
             for modelo, datos in resultado["contenido"]["email"].items():
                 if datos.get("exito"):
-                    with st.expander(f"📧 {modelo}"):
+                    with st.expander(f"📧 {modelo}", expanded=True):
                         st.markdown("**🌐 Original:**")
                         st.write(datos["respuesta"])
                         
@@ -345,12 +352,29 @@ def mostrar_resultados_normales(resultado, llm_usado_texto):
                             st.markdown("---")
                             st.markdown("**🇪🇸 Traducción al español:**")
                             st.write(datos["traduccion"])
+                else:
+                    st.warning(f"⚠️ {modelo}: {datos.get('error', 'Error desconocido')}")
+        else:
+            st.info("No hay datos de email disponibles")
     
     with tab3:
+        st.markdown("#### 🎯 Eslogans Publicitarios")
+        
+        # Depuración: mostrar qué hay en resultado["contenido"]
+        with st.expander("🔧 Información de depuración (solo para desarrolladores)", expanded=False):
+            st.json({
+                "claves_disponibles": list(resultado["contenido"].keys()),
+                "tiene_eslogans": "eslogans" in resultado["contenido"],
+                "llm_usado": llm_usado_texto
+            })
+        
         if "eslogans" in resultado["contenido"]:
-            for modelo, datos in resultado["contenido"]["eslogans"].items():
+            eslogans_data = resultado["contenido"]["eslogans"]
+            st.success(f"✅ Se encontraron {len(eslogans_data)} resultado(s) de eslóganes")
+            
+            for modelo, datos in eslogans_data.items():
                 if datos.get("exito"):
-                    with st.expander(f"💡 {modelo}"):
+                    with st.expander(f"💡 {modelo}", expanded=True):
                         st.markdown("**🌐 Original:**")
                         st.write(datos["respuesta"])
                         
@@ -358,6 +382,15 @@ def mostrar_resultados_normales(resultado, llm_usado_texto):
                             st.markdown("---")
                             st.markdown("**🇪🇸 Traducción al español:**")
                             st.write(datos["traduccion"])
+                        else:
+                            st.caption("⚠️ Traducción no disponible")
+                        
+                        st.caption(f"⏱️ {datos['tiempo_ms']} ms")
+                else:
+                    st.warning(f"⚠️ {modelo}: No se generaron eslóganes. Error: {datos.get('error', 'Desconocido')}")
+        else:
+            st.error("❌ No se encontró la clave 'eslogans' en la respuesta del servidor")
+            st.info("Esto puede deberse a que el backend no generó eslóganes para este LLM. Verifica los logs de Render.")
 
 # ==================== LÓGICA PRINCIPAL ====================
 if generar:
