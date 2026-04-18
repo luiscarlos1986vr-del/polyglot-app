@@ -109,16 +109,40 @@ st.markdown("""
         color: white;
         box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     }
-    /* Ajuste para los radio buttons */
+    
+       /* Ajuste para los radio buttons */
     div[role="radiogroup"] label {
         margin: 5px 0;
-        padding: 5px;
-        border-radius: 8px;
-        transition: background-color 0.2s;
+        padding: 8px 12px;
+        border-radius: 10px;
+        transition: all 0.2s ease;
+        cursor: pointer;
     }
+    
+    /* Efecto al pasar el mouse - COLOR MÁS SUAVE */
     div[role="radiogroup"] label:hover {
-        background-color: #2a2a3e;
+        background-color: #3a4a6e !important;
+        color: white !important;
+        transform: translateX(4px);
     }
+    
+    /* Estilo para la opción SELECCIONADA */
+    div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked) {
+        background-color: #2c5a7a !important;
+        color: white !important;
+        font-weight: 500;
+        border-left: 3px solid #FFD700;
+    }
+    
+    /* Círculo del radio cuando está seleccionado */
+    div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked) .st-emotion-cache-1b0udgb {
+        border-color: #FFD700 !important;
+    }
+    
+    div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked) .st-emotion-cache-1b0udgb svg {
+        fill: #FFD700 !important;
+    }
+    
 </style>
 """, unsafe_allow_html=True)
 
