@@ -224,7 +224,7 @@ with col_btn2:
 # ==================== FUNCIONES DE VISUALIZACIÓN ====================
 
 def mostrar_comparacion(resultado, mercado_seleccionado_nombre):
-    """Muestra los resultados de los 3 LLMs lado a lado para comparar - ESTILO SUTIL"""
+    """Muestra los resultados de los 3 LLMs lado a lado para comparar"""
     
     st.markdown("---")
     st.markdown("## 🏆 Comparación de Motores de IA")
@@ -235,11 +235,10 @@ def mostrar_comparacion(resultado, mercado_seleccionado_nombre):
     
     posts = resultado["contenido"]["post"]
     
-    llm_iconos = {
-        "Deepseek": "🔍",
-        "Mistral": "🌊",
-        "Gemini": "🤖"
-    }
+    # Colores unificados con el seleccionador de IA
+    color_fondo = "#d8e7f0"      # Mismo color de hover/selected
+    color_borde = "#FFD700"       # Mismo borde dorado
+    color_texto = "#1a1a2e"       # Texto oscuro para contraste
     
     col1, col2, col3 = st.columns(3)
     llms_orden = ["Deepseek", "Mistral", "Gemini"]
@@ -247,62 +246,82 @@ def mostrar_comparacion(resultado, mercado_seleccionado_nombre):
     for idx, llm_nombre in enumerate(llms_orden):
         with [col1, col2, col3][idx]:
             datos_post = posts.get(llm_nombre, {})
-            icono = llm_iconos.get(llm_nombre, "🤖")
             
             if datos_post.get("exito"):
-                # Tarjeta con estilo sutil
+                # Tarjeta con los mismos colores del seleccionador - SIN ÍCONOS
                 st.markdown(f"""
                 <div style="
-                    background: rgba(30, 30, 46, 0.5);
-                    border-radius: 12px;
-                    padding: 0.8rem;
+                    background: {color_fondo};
+                    border-radius: 16px;
+                    padding: 1rem;
                     margin: 0.5rem 0;
-                    border: 1px solid #2a2a3e;
+                    border-left: 4px solid {color_borde};
                     transition: all 0.2s ease;
                 ">
-                    <div style="font-size: 1.8rem; text-align: center; opacity: 0.7;">{icono}</div>
-                    <div style="text-align: center; font-size: 1rem; font-weight: 500; color: #b0b0b0; margin: 0.3rem 0;">{llm_nombre}</div>
-                    <div style="text-align: center; font-size: 0.7rem; color: #666; border-bottom: 1px solid #2a2a3e; padding-bottom: 0.5rem; margin-bottom: 0.5rem;">⏱️ {datos_post.get("tiempo_ms", 0)} ms</div>
+                    <div style="text-align: center; font-size: 1.2rem; font-weight: 600; color: {color_texto}; margin: 0.3rem 0;">{llm_nombre}</div>
+                    <div style="text-align: center; font-size: 0.8rem; color: #555; border-bottom: 1px solid #c0d0e0; padding-bottom: 0.5rem; margin-bottom: 0.5rem;">⏱️ {datos_post.get("tiempo_ms", 0)} ms</div>
                 </div>
                 """, unsafe_allow_html=True)
                 
+                # POST - desplegado por defecto
                 respuesta_post = datos_post.get("respuesta", "")
                 traduccion_post = datos_post.get("traduccion", "")
                 
-                with st.expander("📱 Ver post generado", expanded=False):
+                st.markdown("#### 📱 Post para Redes Sociales")
+                with st.expander("Ver contenido", expanded=True):
                     st.markdown("**🌐 Original:**")
-                    st.write(respuesta_post[:300] + "..." if len(respuesta_post) > 300 else respuesta_post)
+                    st.write(respuesta_post)
                     if traduccion_post:
                         st.markdown("---")
-                        st.markdown("**🇪🇸 Traducción:**")
-                        st.write(traduccion_post[:300] + "..." if len(traduccion_post) > 300 else traduccion_post)
+                        st.markdown("**🇪🇸 Traducción al español:**")
+                        st.write(traduccion_post)
+                    st.caption(f"⏱️ {datos_post.get('tiempo_ms', 0)} ms")
                 
-                # Mostrar eslóganes
+                # ESLÓGANES - desplegado por defecto
                 if "eslogans" in resultado["contenido"]:
                     datos_eslogans = resultado["contenido"]["eslogans"].get(llm_nombre, {})
                     if datos_eslogans.get("exito"):
-                        with st.expander("💡 Ver eslóganes", expanded=False):
+                        st.markdown("#### 💡 Eslogans Publicitarios")
+                        with st.expander("Ver contenido", expanded=True):
                             st.markdown("**🌐 Original:**")
                             st.write(datos_eslogans.get("respuesta", ""))
                             if datos_eslogans.get("traduccion"):
                                 st.markdown("---")
-                                st.markdown("**🇪🇸 Traducción:**")
+                                st.markdown("**🇪🇸 Traducción al español:**")
                                 st.write(datos_eslogans.get("traduccion"))
+                            st.caption(f"⏱️ {datos_eslogans.get('tiempo_ms', 0)} ms")
+                    else:
+                        st.info(f"💡 No se generaron eslóganes para {llm_nombre}")
+                
+                # EMAIL - desplegado por defecto
+                if "email" in resultado["contenido"]:
+                    datos_email = resultado["contenido"]["email"].get(llm_nombre, {})
+                    if datos_email.get("exito"):
+                        st.markdown("#### 📧 Email Promocional")
+                        with st.expander("Ver contenido", expanded=True):
+                            st.markdown("**🌐 Original:**")
+                            st.write(datos_email.get("respuesta", ""))
+                            if datos_email.get("traduccion"):
+                                st.markdown("---")
+                                st.markdown("**🇪🇸 Traducción al español:**")
+                                st.write(datos_email.get("traduccion"))
+                            st.caption(f"⏱️ {datos_email.get('tiempo_ms', 0)} ms")
+                
+                st.markdown("---")
+                
             else:
                 st.markdown(f"""
                 <div style="
-                    background: rgba(30, 30, 46, 0.3);
-                    border-radius: 12px;
-                    padding: 0.8rem;
+                    background: #f0f0f0;
+                    border-radius: 16px;
+                    padding: 1rem;
                     text-align: center;
-                    border: 1px solid #2a2a3e;
+                    border: 1px solid #ddd;
                 ">
-                    <div style="font-size: 1.8rem; opacity: 0.5;">{icono}</div>
-                    <div style="color: #888;">{llm_nombre}</div>
+                    <div style="font-size: 1.2rem; font-weight: 500; color: #888;">{llm_nombre}</div>
+                    <div style="color: #c00; font-size: 0.8rem;">Error en generación</div>
                 </div>
                 """, unsafe_allow_html=True)
-                st.error(f"Error: {datos_post.get('error', 'Desconocido')}")
-
 
 
 
