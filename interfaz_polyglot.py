@@ -156,7 +156,7 @@ with st.container():
     st.markdown('<div class="product-card">', unsafe_allow_html=True)
     st.markdown("### 📦 ¿Qué producto quieres vender al mundo?")
     descripcion = st.text_area(
-        "",
+        "Descripción del producto",
         placeholder="Ej: Auriculares con cancelación de ruido, 40h de batería",
         height=80,
         label_visibility="collapsed"
