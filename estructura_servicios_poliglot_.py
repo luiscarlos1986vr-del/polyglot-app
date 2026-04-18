@@ -458,10 +458,12 @@ def comparar_llms_para_contenido(descripcion_producto, mercado, tipo_contenido="
 
 # TRDUCCIÓN A ESP
 
+
 # ==================== FUNCIÓN DE TRADUCCIÓN ====================
 def traducir_a_espanol(texto, idioma_origen):
     """
     Traduce un texto del idioma origen al español.
+    Usa Gemini como primera opción, con respaldo en Deepseek si falla.
     
     Args:
         texto (str): Texto a traducir
@@ -493,8 +495,8 @@ def traducir_a_espanol(texto, idioma_origen):
     TRADUCCIÓN AL ESPAÑOL:
     """
     
+    # Intento 1: Gemini
     try:
-        # Usar Gemini para traducir (es rápido y gratuito)
         respuesta = gemini_client.models.generate_content(
             model="gemini-2.5-flash-lite",
             contents=prompt_traduccion,
@@ -502,9 +504,36 @@ def traducir_a_espanol(texto, idioma_origen):
         )
         return respuesta.text.strip()
     except Exception as e:
-        return f"❌ Error en traducción: {str(e)}"
-
-
+        error_msg = str(e)
+        if "503" in error_msg or "UNAVAILABLE" in error_msg:
+            print("⚠️ Gemini saturado, usando Deepseek como respaldo...")
+        else:
+            print(f"⚠️ Error en Gemini: {error_msg}")
+    
+    # Intento 2: Deepseek (respaldo)
+    try:
+        respuesta = deepseek_client.chat.completions.create(
+            model="deepseek-chat",
+            messages=[{"role": "user", "content": prompt_traduccion}],
+            temperature=0.3,
+            max_tokens=800
+        )
+        return respuesta.choices[0].message.content.strip()
+    except Exception as e:
+        print(f"⚠️ Error en Deepseek: {str(e)}")
+    
+    # Intento 3: Mistral (último respaldo)
+    try:
+        respuesta = mistral_client.chat.complete(
+            model="mistral-large-latest",
+            messages=[{"role": "user", "content": prompt_traduccion}],
+            temperature=0.3,
+            max_tokens=800
+        )
+        return respuesta.choices[0].message.content.strip()
+    except Exception as e:
+        print(f"❌ Error en todos los motores de traducción: {str(e)}")
+        return f"❌ Error en traducción: {error_msg}"
 
 # ==================== EJEMPLO DE USO (PARA PRUEBAS) ====================
 # Este bloque solo se ejecuta si corres este archivo directamente
