@@ -56,3 +56,5 @@ Una startup de comercio electrónico, **Global-Gadgets**, quiere expandirse a me
 
 ### **Pasos para Configurar**  
 1. Clona el repositorio:
+2. Instala las dependencias:
+3. Configura las claves de API en `config.py`:
