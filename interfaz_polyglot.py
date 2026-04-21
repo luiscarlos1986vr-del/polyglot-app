@@ -81,33 +81,6 @@ st.markdown("""
         font-weight: 500;
         border-left: 3px solid #FFD700;
     }
-    /* Botones de idioma */
-    .lang-btn {
-        background-color: #d8e7f0;
-        color: #1a1a2e;
-        border: 1px solid #FFD700;
-        border-radius: 20px;
-        padding: 0.3rem 1rem;
-        font-size: 1rem;
-        font-weight: bold;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        width: 100%;
-    }
-    .lang-btn:hover {
-        background-color: #FFD700;
-        transform: scale(1.02);
-    }
-    .lang-btn-active {
-        background-color: #FFD700;
-        color: #1a1a2e;
-        border: 1px solid #FFD700;
-        border-radius: 20px;
-        padding: 0.3rem 1rem;
-        font-size: 1rem;
-        font-weight: bold;
-        width: 100%;
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -123,6 +96,11 @@ def mostrar_con_efecto(texto, placeholder, velocidad=0.01):
     placeholder.markdown(texto_mostrado)
 
 
+# ==================== INICIALIZAR IDIOMA ====================
+if "idioma" not in st.session_state:
+    st.session_state.idioma = "es"  # español por defecto
+
+
 # ==================== TEXTO BILINGÜE ====================
 def t(clave):
     """Retorna el texto en el idioma seleccionado"""
@@ -133,15 +111,9 @@ def t(clave):
         "subtitulo": {"es": "Convierte tu producto en ventas globales 🏆<br>Campaña de Marketing para Brasil | Japón | Alemania", 
                       "en": "Turn your product into global sales 🏆<br>Marketing Campaign for Brazil | Japan | Germany"},
         
-        # Idioma de entrada
-        "idioma_titulo": {"es": "🌐 Idioma de interfaz", "en": "🌐 Interface language"},
-        "idioma_pregunta": {"es": "Selecciona el idioma de la interfaz", 
-                           "en": "Select the interface language"},
-        
-        # Idioma de entrada del producto
-        "idioma_entrada_titulo": {"es": "📝 Idioma de entrada del producto", "en": "📝 Product input language"},
-        "idioma_entrada_pregunta": {"es": "¿En qué idioma vas a describir tu producto?", 
-                                    "en": "In which language will you describe your product?"},
+        # Selector de idioma
+        "idioma_titulo": {"es": "🌐 Idioma", "en": "🌐 Language"},
+        "idioma_pregunta": {"es": "Selecciona el idioma", "en": "Select the language"},
         
         # Producto
         "producto_titulo": {"es": "📦 ¿Qué producto quieres vender al mundo?", 
@@ -184,30 +156,23 @@ def t(clave):
     return textos.get(clave, {}).get(st.session_state.idioma, textos.get(clave, {}).get("es", clave))
 
 
-# ==================== INICIALIZAR IDIOMA ====================
-if "idioma" not in st.session_state:
-    st.session_state.idioma = "es"  # español por defecto
-
-
 # ==================== HEADER ====================
 st.markdown(f'<p class="main-title">{t("titulo")}</p>', unsafe_allow_html=True)
 st.markdown(f'<p class="company-name">{t("empresa")}</p>', unsafe_allow_html=True)
 st.markdown(f'<p class="subtitle">{t("subtitulo")}</p>', unsafe_allow_html=True)
 
 
-# ==================== SELECTOR DE IDIOMA DE INTERFAZ ====================
+# ==================== SELECTOR DE IDIOMA ÚNICO ====================
 st.markdown("---")
 st.markdown(f"### {t('idioma_titulo')}")
 st.markdown(t("idioma_pregunta"))
 
 col_lang1, col_lang2, col_lang3, col_lang4, col_lang5 = st.columns([1, 1, 1, 1, 1])
 with col_lang2:
-    btn_es_clase = "lang-btn-active" if st.session_state.idioma == "es" else "lang-btn"
     if st.button("🇪🇸 Español", key="btn_es", use_container_width=True):
         st.session_state.idioma = "es"
         st.rerun()
 with col_lang3:
-    btn_en_clase = "lang-btn-active" if st.session_state.idioma == "en" else "lang-btn"
     if st.button("🇬🇧 English", key="btn_en", use_container_width=True):
         st.session_state.idioma = "en"
         st.rerun()
@@ -215,23 +180,9 @@ with col_lang3:
 st.markdown("---")
 
 
-# ==================== IDIOMA DE ENTRADA DEL PRODUCTO ====================
-st.markdown(f"### {t('idioma_entrada_titulo')}")
-st.markdown(t("idioma_entrada_pregunta"))
-
-col_idioma1, col_idioma2, col_idioma3 = st.columns([1, 2, 1])
-with col_idioma2:
-    idioma_entrada_opcion = st.radio(
-        "Idioma entrada",
-        ["Español", "Inglés"],
-        index=0,
-        horizontal=True,
-        label_visibility="collapsed"
-    )
-    idioma_map = {"Español": "es", "Inglés": "en"}
-    idioma_entrada = idioma_map[idioma_entrada_opcion]
-
-st.markdown("---")
+# ==================== IDIOMA DE ENTRADA DEL PRODUCTO (mismo que interfaz) ====================
+# El idioma de entrada del producto es el mismo que seleccionó el usuario
+idioma_entrada = "es" if st.session_state.idioma == "es" else "en"
 
 
 # ==================== ENTRADA DEL PRODUCTO ====================
