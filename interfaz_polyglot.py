@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-interfaz_polyglot.py - Interfaz de Usuario Polyglot
+interfaz_polyglot.py - Interfaz de Usuario Polyglot (Bilingüe)
 """
 
 import streamlit as st
@@ -96,23 +96,96 @@ def mostrar_con_efecto(texto, placeholder, velocidad=0.01):
     placeholder.markdown(texto_mostrado)
 
 
+# ==================== TEXTO BILINGÜE ====================
+def t(clave):
+    """Retorna el texto en el idioma seleccionado"""
+    textos = {
+        # Header
+        "titulo": {"es": "🌍 Polyglot", "en": "🌍 Polyglot"},
+        "empresa": {"es": "⚡ Global-Gadgets ⚡", "en": "⚡ Global-Gadgets ⚡"},
+        "subtitulo": {"es": "Convierte tu producto en ventas globales 🏆<br>Campaña de Marketing para Brasil | Japón | Alemania", 
+                      "en": "Turn your product into global sales 🏆<br>Marketing Campaign for Brazil | Japan | Germany"},
+        
+        # Idioma de entrada
+        "idioma_titulo": {"es": "🌐 Idioma de entrada", "en": "🌐 Input language"},
+        "idioma_pregunta": {"es": "¿En qué idioma vas a describir tu producto?", 
+                           "en": "In which language will you describe your product?"},
+        
+        # Producto
+        "producto_titulo": {"es": "📦 ¿Qué producto quieres vender al mundo?", 
+                           "en": "📦 What product do you want to sell to the world?"},
+        "producto_placeholder": {"es": "Ej: Auriculares con cancelación de ruido, 40h de batería",
+                                "en": "Ex: Noise-cancelling headphones, 40h battery"},
+        
+        # Mercado
+        "mercado_titulo": {"es": "🎯 Mercado objetivo", "en": "🎯 Target market"},
+        "mercado_desc": {"es": "Selecciona el país para la campaña", "en": "Select the country for the campaign"},
+        
+        # Motor IA
+        "motor_titulo": {"es": "🤖 Motor de generación", "en": "🤖 Generation engine"},
+        "motor_desc": {"es": "Selecciona qué IA generará tu contenido", "en": "Select which AI will generate your content"},
+        
+        # Botón
+        "boton": {"es": "✨ Generar campaña internacional ✨", "en": "✨ Generate international campaign ✨"},
+        
+        # Resultados
+        "comparacion_titulo": {"es": "🏆 Comparación de Motores de IA", "en": "🏆 AI Engines Comparison"},
+        "post_titulo": {"es": "📱 Post para Redes Sociales", "en": "📱 Social Media Post"},
+        "eslogans_titulo": {"es": "💡 Eslogans Publicitarios", "en": "💡 Advertising Slogans"},
+        "email_titulo": {"es": "📧 Email Promocional", "en": "📧 Promotional Email"},
+        "traduccion_label": {"es": "🇪🇸 Traducción al español", "en": "🇬🇧 English translation"},
+        
+        # Errores
+        "error_producto": {"es": "❌ Por favor, describe tu producto para empezar", 
+                          "en": "❌ Please describe your product to start"},
+        "error_conexion": {"es": "❌ No se pudo conectar al servidor", 
+                          "en": "❌ Could not connect to server"},
+        "exito": {"es": "✅ ¡Campaña generada exitosamente para ", 
+                 "en": "✅ Campaign successfully generated for "},
+        
+        # Footer
+        "footer_empresa": {"es": "🌍 <strong>Global-Gadgets</strong> - Polyglot Marketing Multilingüe",
+                          "en": "🌍 <strong>Global-Gadgets</strong> - Polyglot Multilingual Marketing"},
+        "footer_poten": {"es": "Potenciado por Gemini | Deepseek | Mistral",
+                        "en": "Powered by Gemini | Deepseek | Mistral"},
+    }
+    return textos.get(clave, {}).get(st.session_state.idioma, textos.get(clave, {}).get("es", clave))
+
+
+# ==================== INICIALIZAR IDIOMA ====================
+if "idioma" not in st.session_state:
+    st.session_state.idioma = "es"  # español por defecto
+
+
+# ==================== SELECTOR DE IDIOMA (arriba a la derecha) ====================
+col_idioma_top1, col_idioma_top2, col_idioma_top3 = st.columns([5, 1, 1])
+with col_idioma_top2:
+    if st.button("🇪🇸", key="btn_es"):
+        st.session_state.idioma = "es"
+        st.rerun()
+with col_idioma_top3:
+    if st.button("🇬🇧", key="btn_en"):
+        st.session_state.idioma = "en"
+        st.rerun()
+
+
 # ==================== HEADER ====================
-st.markdown('<p class="main-title">🌍 Polyglot</p>', unsafe_allow_html=True)
-st.markdown('<p class="company-name">⚡ Global-Gadgets ⚡</p>', unsafe_allow_html=True)
-st.markdown('<p class="subtitle">Convierte tu producto en ventas globales 🏆<br>Campaña de Marketing para Brasil | Japón | Alemania</p>', unsafe_allow_html=True)
+st.markdown(f'<p class="main-title">{t("titulo")}</p>', unsafe_allow_html=True)
+st.markdown(f'<p class="company-name">{t("empresa")}</p>', unsafe_allow_html=True)
+st.markdown(f'<p class="subtitle">{t("subtitulo")}</p>', unsafe_allow_html=True)
 
 
 # ==================== IDIOMA DE ENTRADA (PRIMERO) ====================
 st.markdown("---")
-st.markdown("### 🌐 Idioma de entrada")
-st.markdown("¿En qué idioma vas a describir tu producto?")
+st.markdown(f"### {t('idioma_titulo')}")
+st.markdown(t("idioma_pregunta"))
 
 col_idioma1, col_idioma2, col_idioma3 = st.columns([1, 2, 1])
 with col_idioma2:
     idioma_entrada_opcion = st.radio(
         "Idioma",
         ["Español", "Inglés"],
-        index=0,
+        index=0 if st.session_state.idioma == "es" else 1,
         horizontal=True,
         label_visibility="collapsed"
     )
@@ -125,10 +198,10 @@ st.markdown("---")
 # ==================== ENTRADA DEL PRODUCTO ====================
 with st.container():
     st.markdown('<div class="product-card">', unsafe_allow_html=True)
-    st.markdown("### 📦 ¿Qué producto quieres vender al mundo?")
+    st.markdown(f"### {t('producto_titulo')}")
     descripcion = st.text_area(
         "Descripción del producto",
-        placeholder="Ej: Auriculares con cancelación de ruido, 40h de batería",
+        placeholder=t("producto_placeholder"),
         height=80,
         label_visibility="collapsed"
     )
@@ -139,8 +212,8 @@ with st.container():
 col1, col2 = st.columns(2)
 
 with col1:
-    st.markdown("### 🎯 Mercado objetivo")
-    st.markdown("Selecciona el país para la campaña")
+    st.markdown(f"### {t('mercado_titulo')}")
+    st.markdown(t("mercado_desc"))
     
     mercado_opciones = {
         "🇧🇷 Brasil": "brasil",
@@ -157,8 +230,8 @@ with col1:
     mercado = mercado_opciones[mercado_seleccionado]
 
 with col2:
-    st.markdown("### 🤖 Motor de generación")
-    st.markdown("Selecciona qué IA generará tu contenido")
+    st.markdown(f"### {t('motor_titulo')}")
+    st.markdown(t("motor_desc"))
     
     llm_opciones = {
         "Gemini (Google)": "gemini",
@@ -179,13 +252,13 @@ with col2:
 # ==================== BOTÓN DE GENERACIÓN ====================
 col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
 with col_btn2:
-    generar = st.button("✨ Generar campaña internacional ✨", type="primary", use_container_width=True)
+    generar = st.button(t("boton"), type="primary", use_container_width=True)
 
 
 # ==================== FUNCIONES DE VISUALIZACIÓN ====================
 def mostrar_comparacion(resultado, mercado_nombre):
     st.markdown("---")
-    st.markdown("## 🏆 Comparación de Motores de IA")
+    st.markdown(f"## {t('comparacion_titulo')}")
     
     if "post" not in resultado["contenido"]:
         st.warning("No hay datos de post para comparar")
@@ -198,7 +271,7 @@ def mostrar_comparacion(resultado, mercado_nombre):
     color_texto = "#1a1a2e"
     
     # Texto de traducción según idioma seleccionado
-    texto_traduccion = "🇪🇸 Traducción al español" if idioma_entrada == "es" else "🇬🇧 English translation"
+    texto_traduccion = t("traduccion_label")
     
     col1, col2, col3 = st.columns(3)
     llms_orden = ["Deepseek", "Mistral", "Gemini"]
@@ -219,7 +292,7 @@ def mostrar_comparacion(resultado, mercado_nombre):
                 respuesta_post = datos_post.get("respuesta", "")
                 traduccion_post = datos_post.get("traduccion", "")
                 
-                st.markdown("#### 📱 Post para Redes Sociales")
+                st.markdown(f"#### {t('post_titulo')}")
                 container_post = st.empty()
                 mostrar_con_efecto(respuesta_post, container_post, velocidad=0.01)
                 
@@ -233,7 +306,7 @@ def mostrar_comparacion(resultado, mercado_nombre):
                 if "eslogans" in resultado["contenido"]:
                     datos_eslogans = resultado["contenido"]["eslogans"].get(llm_nombre, {})
                     if datos_eslogans.get("exito"):
-                        st.markdown("#### 💡 Eslogans Publicitarios")
+                        st.markdown(f"#### {t('eslogans_titulo')}")
                         container_eslogan = st.empty()
                         mostrar_con_efecto(datos_eslogans.get("respuesta", ""), container_eslogan, velocidad=0.01)
                         
@@ -247,7 +320,7 @@ def mostrar_comparacion(resultado, mercado_nombre):
                 if "email" in resultado["contenido"]:
                     datos_email = resultado["contenido"]["email"].get(llm_nombre, {})
                     if datos_email.get("exito"):
-                        st.markdown("#### 📧 Email Promocional")
+                        st.markdown(f"#### {t('email_titulo')}")
                         container_email = st.empty()
                         mostrar_con_efecto(datos_email.get("respuesta", ""), container_email, velocidad=0.01)
                         
@@ -264,9 +337,9 @@ def mostrar_resultados_normales(resultado, llm_usado_texto):
     st.markdown(f"### Resultados generados por {llm_usado_texto}")
     
     # Texto de traducción según idioma seleccionado
-    texto_traduccion = "🇪🇸 Traducción al español" if idioma_entrada == "es" else "🇬🇧 English translation"
+    texto_traduccion = t("traduccion_label")
     
-    tab1, tab2, tab3 = st.tabs(["📱 Redes Sociales", "📧 Email Promocional", "🎯 Eslogans"])
+    tab1, tab2, tab3 = st.tabs([t("post_titulo"), t("email_titulo"), t("eslogans_titulo")])
     
     with tab1:
         if "post" in resultado["contenido"]:
@@ -310,7 +383,7 @@ def mostrar_resultados_normales(resultado, llm_usado_texto):
 # ==================== LÓGICA PRINCIPAL ====================
 if generar:
     if not descripcion:
-        st.error("❌ Por favor, describe tu producto para empezar")
+        st.error(t("error_producto"))
     else:
         mercado_nombre = mercado_seleccionado.replace("🇧🇷 ", "").replace("🇯🇵 ", "").replace("🇩🇪 ", "")
         
@@ -331,7 +404,7 @@ if generar:
                     resultado = response.json()
                     
                     if resultado.get("exito"):
-                        st.success(f"✅ ¡Campaña generada exitosamente para {mercado_nombre}!")
+                        st.success(f"{t('exito')} {mercado_nombre}!")
                         
                         if llm == "todos":
                             mostrar_comparacion(resultado, mercado_nombre)
@@ -343,7 +416,7 @@ if generar:
                     st.error(f"❌ Error de conexión: {response.status_code}")
                     
             except requests.exceptions.ConnectionError:
-                st.error("❌ No se pudo conectar al servidor")
+                st.error(t("error_conexion"))
             except Exception as e:
                 st.error(f"❌ Error inesperado: {str(e)}")
 
@@ -352,8 +425,8 @@ if generar:
 st.markdown("---")
 st.markdown(f'''
 <div class="footer">
-    🌍 <strong>Global-Gadgets</strong> - Polyglot Marketing Multilingüe<br>
+    {t("footer_empresa")}<br>
     🇧🇷 Brasil | 🇯🇵 Japón | 🇩🇪 Alemania<br>
-    Potenciado por Gemini | Deepseek | Mistral
+    {t("footer_poten")}
 </div>
 ''', unsafe_allow_html=True)
