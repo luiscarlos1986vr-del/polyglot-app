@@ -45,6 +45,21 @@ gemini_client = genai.Client(api_key=GEMINI_API_KEY)
 print("✅ Todos los clientes inicializados correctamente")
 
 
+# ==================== CONFIGURACIÓN DE IDIOMAS DE ENTRADA ====================
+IDIOMAS_ENTRADA = {
+    "es": {
+        "nombre": "Español",
+        "codigo": "es",
+        "instruccion": "La descripción del producto está en español"
+    },
+    "en": {
+        "nombre": "Inglés", 
+        "codigo": "en",
+        "instruccion": "The product description is in English"
+    }
+}
+
+
 # ==================== CONFIGURACIÓN DE MERCADOS ====================
 MERCADOS = {
     "japon": {
@@ -72,10 +87,14 @@ MERCADOS = {
 
 
 # ==================== CONSTRUCCIÓN DE PROMPTS ====================
-def construir_prompt_post(descripcion_producto, mercado):
+def construir_prompt_post(descripcion_producto, mercado, idioma_entrada="es"):
     config = MERCADOS[mercado]
+    idioma_config = IDIOMAS_ENTRADA.get(idioma_entrada, IDIOMAS_ENTRADA["es"])
+    
     return f"""
     Actúa como un experto en marketing localizado para {config['nombre_pais']}.
+    
+    IMPORTANTE: {idioma_config['instruccion']}.
     
     TAREA: Crear un post para redes sociales (estilo Twitter/X) sobre el siguiente producto.
     IMPORTANTE: El contenido debe estar en IDIOMA {config['codigo_idioma']} ({config['nombre_pais']}).
@@ -93,10 +112,14 @@ def construir_prompt_post(descripcion_producto, mercado):
     """
 
 
-def construir_prompt_email(descripcion_producto, mercado):
+def construir_prompt_email(descripcion_producto, mercado, idioma_entrada="es"):
     config = MERCADOS[mercado]
+    idioma_config = IDIOMAS_ENTRADA.get(idioma_entrada, IDIOMAS_ENTRADA["es"])
+    
     return f"""
     Actúa como un redactor de email marketing especializado en {config['nombre_pais']}.
+    
+    IMPORTANTE: {idioma_config['instruccion']}.
     
     TAREA: Escribir un email promocional en IDIOMA {config['codigo_idioma']}.
     
@@ -120,10 +143,14 @@ def construir_prompt_email(descripcion_producto, mercado):
     """
 
 
-def construir_prompt_eslogans(descripcion_producto, mercado):
+def construir_prompt_eslogans(descripcion_producto, mercado, idioma_entrada="es"):
     config = MERCADOS[mercado]
+    idioma_config = IDIOMAS_ENTRADA.get(idioma_entrada, IDIOMAS_ENTRADA["es"])
+    
     return f"""
 Eres un experto creativo publicitario especializado en el mercado de {config['nombre_pais']}.
+
+IMPORTANTE: {idioma_config['instruccion']}.
 
 Tu tarea es generar EXACTAMENTE 3 eslóganes publicitarios para el siguiente producto:
 
@@ -185,7 +212,7 @@ def consultar_mistral(prompt, temperatura=0.7):
         "Content-Type": "application/json"
     }
     data = {
-        "model": "mistral-small-latest",  # Usar modelo más económico
+        "model": "mistral-small-latest",
         "messages": [{"role": "user", "content": prompt}],
         "temperature": temperatura,
         "max_tokens": 500
@@ -297,7 +324,7 @@ def consultar_gemini(prompt, temperatura=0.7):
 
 
 # ==================== FUNCIÓN PRINCIPAL ====================
-def generar_campana_completa(descripcion_producto, mercado, llm_seleccionado="todos"):
+def generar_campana_completa(descripcion_producto, mercado, llm_seleccionado="todos", idioma_entrada="es"):
     if mercado not in MERCADOS:
         return {"exito": False, "error": f"Mercado '{mercado}' no válido"}
     
@@ -317,9 +344,9 @@ def generar_campana_completa(descripcion_producto, mercado, llm_seleccionado="to
         return {"exito": False, "error": f"LLM '{llm_seleccionado}' no válido"}
     
     prompts = {
-        "post": construir_prompt_post(descripcion_producto, mercado),
-        "email": construir_prompt_email(descripcion_producto, mercado),
-        "eslogans": construir_prompt_eslogans(descripcion_producto, mercado)
+        "post": construir_prompt_post(descripcion_producto, mercado, idioma_entrada),
+        "email": construir_prompt_email(descripcion_producto, mercado, idioma_entrada),
+        "eslogans": construir_prompt_eslogans(descripcion_producto, mercado, idioma_entrada)
     }
     
     resultados = {
@@ -328,6 +355,7 @@ def generar_campana_completa(descripcion_producto, mercado, llm_seleccionado="to
         "configuracion_mercado": MERCADOS[mercado],
         "modo": modo,
         "llm_utilizado": llm_seleccionado,
+        "idioma_entrada": idioma_entrada,
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
         "contenido": {}
     }
