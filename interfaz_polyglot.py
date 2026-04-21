@@ -19,6 +19,7 @@ st.set_page_config(
 # ==================== ESTILOS CSS ====================
 st.markdown("""
 <style>
+    /* Título principal */
     .main-title {
         text-align: center;
         font-size: 5rem;
@@ -35,9 +36,12 @@ st.markdown("""
     }
     .subtitle {
         text-align: center;
-        color: #666;
+        color: #888;
         margin-bottom: 2rem;
+        font-size: 0.9rem;
     }
+    
+    /* Tarjeta de producto */
     .product-card {
         background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
         padding: 0.5rem;
@@ -45,32 +49,82 @@ st.markdown("""
         border: 1px solid #333;
         margin-bottom: 0.5rem;
     }
+    .product-card h3 {
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+        color: #ccc;
+    }
+    
+    /* Estilos generales para texto del cuerpo */
+    body, .stMarkdown, .stTextArea, .stSelectbox, .stRadio {
+        font-size: 0.85rem;
+    }
+    
+    /* Títulos de secciones más sutiles */
+    h1, h2, h3 {
+        color: #888;
+    }
+    h1 {
+        font-size: 2rem;
+    }
+    h2 {
+        font-size: 1.3rem;
+    }
+    h3 {
+        font-size: 1.1rem;
+        color: #aaa;
+    }
+    
+    /* Footer */
     .footer {
         text-align: center;
         margin-top: 3rem;
         padding: 0.5rem;
         color: #888;
-        font-size: 0.8rem;
+        font-size: 0.7rem;
         border-top: 0.5px solid #444;
     }
+    
+    /* Botón principal */
     .stButton > button {
         background: linear-gradient(90deg, #1a6b8a, #2a9d6e);
         color: white;
         font-weight: bold;
         border: none;
-        padding: 0.75rem 2rem;
+        padding: 0.6rem 1.5rem;
         border-radius: 30px;
         transition: transform 0.2s;
+        font-size: 0.9rem;
     }
     .stButton > button:hover {
         transform: scale(1.02);
     }
+    
+    /* Botones de idioma más pequeños */
+    .stButton > button[key="btn_es"], .stButton > button[key="btn_en"] {
+        padding: 0.2rem 0.8rem !important;
+        font-size: 0.8rem !important;
+        background: #d8e7f0 !important;
+        color: #1a1a2e !important;
+        border: 1px solid #FFD700 !important;
+        border-radius: 20px !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+    }
+    .stButton > button[key="btn_es"]:hover, .stButton > button[key="btn_en"]:hover {
+        background: #FFD700 !important;
+        color: #1a1a2e !important;
+        transform: scale(1.02);
+    }
+    
+    /* Ajuste para los radio buttons */
     div[role="radiogroup"] label {
-        margin: 5px 0;
-        padding: 8px 12px;
-        border-radius: 10px;
+        margin: 4px 0;
+        padding: 5px 10px;
+        border-radius: 8px;
         transition: all 0.2s ease;
         cursor: pointer;
+        font-size: 0.85rem;
     }
     div[role="radiogroup"] label:hover {
         background-color: #d8e7f0 !important;
@@ -80,6 +134,19 @@ st.markdown("""
         background-color: #d8e7f0 !important;
         font-weight: 500;
         border-left: 3px solid #FFD700;
+    }
+    
+    /* Expanders más sutiles */
+    .streamlit-expanderHeader {
+        font-size: 0.85rem;
+        color: #6b9bc2;
+        background: transparent;
+    }
+    
+    /* Texto de ayuda más sutil */
+    .stCaption, caption {
+        font-size: 0.7rem;
+        color: #888;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -147,6 +214,10 @@ def t(clave):
         "exito": {"es": "✅ ¡Campaña generada exitosamente para ", 
                  "en": "✅ Campaign successfully generated for "},
         
+        # Spinner
+        "spinner": {"es": "🚀 Generando contenido para {} con {}...",
+                   "en": "🚀 Generating content for {} with {}..."},
+        
         # Footer
         "footer_empresa": {"es": "🌍 <strong>Global-Gadgets</strong> - Polyglot Marketing Multilingüe",
                           "en": "🌍 <strong>Global-Gadgets</strong> - Polyglot Multilingual Marketing"},
@@ -167,7 +238,7 @@ st.markdown("---")
 st.markdown(f"### {t('idioma_titulo')}")
 st.markdown(t("idioma_pregunta"))
 
-col_lang1, col_lang2, col_lang3, col_lang4, col_lang5 = st.columns([1, 1, 1, 1, 1])
+col_lang1, col_lang2, col_lang3, col_lang4, col_lang5 = st.columns([2, 1, 1, 1, 2])
 with col_lang2:
     if st.button("🇪🇸 Español", key="btn_es", use_container_width=True):
         st.session_state.idioma = "es"
@@ -181,7 +252,6 @@ st.markdown("---")
 
 
 # ==================== IDIOMA DE ENTRADA DEL PRODUCTO (mismo que interfaz) ====================
-# El idioma de entrada del producto es el mismo que seleccionó el usuario
 idioma_entrada = "es" if st.session_state.idioma == "es" else "en"
 
 
@@ -260,7 +330,6 @@ def mostrar_comparacion(resultado, mercado_nombre):
     color_borde = "#FFD700"
     color_texto = "#1a1a2e"
     
-    # Texto de traducción según idioma seleccionado
     texto_traduccion = t("traduccion_label")
     
     col1, col2, col3 = st.columns(3)
@@ -272,13 +341,12 @@ def mostrar_comparacion(resultado, mercado_nombre):
             
             if datos_post.get("exito"):
                 st.markdown(f"""
-                <div style="background: {color_fondo}; border-radius: 16px; padding: 1rem; margin: 0.5rem 0; border-left: 4px solid {color_borde};">
-                    <div style="text-align: center; font-size: 1.2rem; font-weight: 600; color: {color_texto};">{llm_nombre}</div>
-                    <div style="text-align: center; font-size: 0.8rem; color: #555;">⏱️ {datos_post.get("tiempo_ms", 0)} ms</div>
+                <div style="background: {color_fondo}; border-radius: 16px; padding: 0.8rem; margin: 0.5rem 0; border-left: 4px solid {color_borde};">
+                    <div style="text-align: center; font-size: 1rem; font-weight: 600; color: {color_texto};">{llm_nombre}</div>
+                    <div style="text-align: center; font-size: 0.7rem; color: #555;">⏱️ {datos_post.get("tiempo_ms", 0)} ms</div>
                 </div>
                 """, unsafe_allow_html=True)
                 
-                # POST
                 respuesta_post = datos_post.get("respuesta", "")
                 traduccion_post = datos_post.get("traduccion", "")
                 
@@ -292,7 +360,6 @@ def mostrar_comparacion(resultado, mercado_nombre):
                     container_trad = st.empty()
                     mostrar_con_efecto(traduccion_post, container_trad, velocidad=0.01)
                 
-                # ESLÓGANES
                 if "eslogans" in resultado["contenido"]:
                     datos_eslogans = resultado["contenido"]["eslogans"].get(llm_nombre, {})
                     if datos_eslogans.get("exito"):
@@ -306,7 +373,6 @@ def mostrar_comparacion(resultado, mercado_nombre):
                             container_trad_eslogan = st.empty()
                             mostrar_con_efecto(datos_eslogans.get("traduccion", ""), container_trad_eslogan, velocidad=0.01)
                 
-                # EMAIL
                 if "email" in resultado["contenido"]:
                     datos_email = resultado["contenido"]["email"].get(llm_nombre, {})
                     if datos_email.get("exito"):
@@ -326,7 +392,6 @@ def mostrar_comparacion(resultado, mercado_nombre):
 def mostrar_resultados_normales(resultado, llm_usado_texto):
     st.markdown(f"### Resultados generados por {llm_usado_texto}")
     
-    # Texto de traducción según idioma seleccionado
     texto_traduccion = t("traduccion_label")
     
     tab1, tab2, tab3 = st.tabs([t("post_titulo"), t("email_titulo"), t("eslogans_titulo")])
@@ -377,7 +442,9 @@ if generar:
     else:
         mercado_nombre = mercado_seleccionado.replace("🇧🇷 ", "").replace("🇯🇵 ", "").replace("🇩🇪 ", "")
         
-        with st.spinner(f"🚀 Generando contenido para {mercado_nombre} con {llm_seleccionado}..."):
+        spinner_text = t("spinner").format(mercado_nombre, llm_seleccionado)
+        
+        with st.spinner(spinner_text):
             try:
                 response = requests.post(
                     f"{API_URL}/generar",
