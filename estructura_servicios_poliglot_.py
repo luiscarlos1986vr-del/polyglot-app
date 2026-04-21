@@ -2,8 +2,8 @@
 """
 estructura_servicios_poliglot.py - Capa de Servicios del Proyecto Polyglot
 
-Este archivo es el "cerebro" del proyecto. Aquí conectamos con las tres inteligencias artificiales
-(Deepseek, Mistral y Gemini), construimos los mensajes (prompts) que les enviamos,
+Este archivo es el "cerebro" del proyecto. Aquí conectamos con a los tres modelos de Inteligencia
+Artificial (Deepseek, Mistral y Gemini), construimos los mensajes (prompts) que les enviamos,
 y procesamos las respuestas para generar el contenido de marketing localizado.
 """
 
