@@ -81,6 +81,7 @@ def generar_campana():
         mercado = datos.get('mercado')
         llm = datos.get('llm', 'todos')
         idioma_entrada = datos.get('idioma_entrada', 'es')
+        print(f"🔍 [API] Idioma recibido: {idioma_entrada}")  # ← LOG DE DEPURACIÓN
         
         if not descripcion:
             return jsonify({
