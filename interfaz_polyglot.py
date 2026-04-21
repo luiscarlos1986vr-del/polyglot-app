@@ -81,6 +81,33 @@ st.markdown("""
         font-weight: 500;
         border-left: 3px solid #FFD700;
     }
+    /* Botones de idioma */
+    .lang-btn {
+        background-color: #d8e7f0;
+        color: #1a1a2e;
+        border: 1px solid #FFD700;
+        border-radius: 20px;
+        padding: 0.3rem 1rem;
+        font-size: 1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        width: 100%;
+    }
+    .lang-btn:hover {
+        background-color: #FFD700;
+        transform: scale(1.02);
+    }
+    .lang-btn-active {
+        background-color: #FFD700;
+        color: #1a1a2e;
+        border: 1px solid #FFD700;
+        border-radius: 20px;
+        padding: 0.3rem 1rem;
+        font-size: 1rem;
+        font-weight: bold;
+        width: 100%;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -107,9 +134,14 @@ def t(clave):
                       "en": "Turn your product into global sales 🏆<br>Marketing Campaign for Brazil | Japan | Germany"},
         
         # Idioma de entrada
-        "idioma_titulo": {"es": "🌐 Idioma de entrada", "en": "🌐 Input language"},
-        "idioma_pregunta": {"es": "¿En qué idioma vas a describir tu producto?", 
-                           "en": "In which language will you describe your product?"},
+        "idioma_titulo": {"es": "🌐 Idioma de interfaz", "en": "🌐 Interface language"},
+        "idioma_pregunta": {"es": "Selecciona el idioma de la interfaz", 
+                           "en": "Select the interface language"},
+        
+        # Idioma de entrada del producto
+        "idioma_entrada_titulo": {"es": "📝 Idioma de entrada del producto", "en": "📝 Product input language"},
+        "idioma_entrada_pregunta": {"es": "¿En qué idioma vas a describir tu producto?", 
+                                    "en": "In which language will you describe your product?"},
         
         # Producto
         "producto_titulo": {"es": "📦 ¿Qué producto quieres vender al mundo?", 
@@ -157,35 +189,42 @@ if "idioma" not in st.session_state:
     st.session_state.idioma = "es"  # español por defecto
 
 
-# ==================== SELECTOR DE IDIOMA (arriba a la derecha) ====================
-col_idioma_top1, col_idioma_top2, col_idioma_top3 = st.columns([5, 1, 1])
-with col_idioma_top2:
-    if st.button("🇪🇸", key="btn_es"):
-        st.session_state.idioma = "es"
-        st.rerun()
-with col_idioma_top3:
-    if st.button("🇬🇧", key="btn_en"):
-        st.session_state.idioma = "en"
-        st.rerun()
-
-
 # ==================== HEADER ====================
 st.markdown(f'<p class="main-title">{t("titulo")}</p>', unsafe_allow_html=True)
 st.markdown(f'<p class="company-name">{t("empresa")}</p>', unsafe_allow_html=True)
 st.markdown(f'<p class="subtitle">{t("subtitulo")}</p>', unsafe_allow_html=True)
 
 
-# ==================== IDIOMA DE ENTRADA (PRIMERO) ====================
+# ==================== SELECTOR DE IDIOMA DE INTERFAZ ====================
 st.markdown("---")
 st.markdown(f"### {t('idioma_titulo')}")
 st.markdown(t("idioma_pregunta"))
 
+col_lang1, col_lang2, col_lang3, col_lang4, col_lang5 = st.columns([1, 1, 1, 1, 1])
+with col_lang2:
+    btn_es_clase = "lang-btn-active" if st.session_state.idioma == "es" else "lang-btn"
+    if st.button("🇪🇸 Español", key="btn_es", use_container_width=True):
+        st.session_state.idioma = "es"
+        st.rerun()
+with col_lang3:
+    btn_en_clase = "lang-btn-active" if st.session_state.idioma == "en" else "lang-btn"
+    if st.button("🇬🇧 English", key="btn_en", use_container_width=True):
+        st.session_state.idioma = "en"
+        st.rerun()
+
+st.markdown("---")
+
+
+# ==================== IDIOMA DE ENTRADA DEL PRODUCTO ====================
+st.markdown(f"### {t('idioma_entrada_titulo')}")
+st.markdown(t("idioma_entrada_pregunta"))
+
 col_idioma1, col_idioma2, col_idioma3 = st.columns([1, 2, 1])
 with col_idioma2:
     idioma_entrada_opcion = st.radio(
-        "Idioma",
+        "Idioma entrada",
         ["Español", "Inglés"],
-        index=0 if st.session_state.idioma == "es" else 1,
+        index=0,
         horizontal=True,
         label_visibility="collapsed"
     )
