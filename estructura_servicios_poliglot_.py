@@ -11,16 +11,13 @@ from mistralai.client import Mistral
 from google import genai
 
 # ==================== CONFIGURACIÓN INICIAL ====================
-# Cargar variables del archivo .env
 load_dotenv()
 
-# Configuración de API keys
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 TIMEOUT = int(os.getenv("TIMEOUT", 30))
 
-# Validación de keys
 if not all([DEEPSEEK_API_KEY, MISTRAL_API_KEY, GEMINI_API_KEY]):
     missing = []
     if not DEEPSEEK_API_KEY: missing.append("DEEPSEEK_API_KEY")
@@ -28,35 +25,17 @@ if not all([DEEPSEEK_API_KEY, MISTRAL_API_KEY, GEMINI_API_KEY]):
     if not GEMINI_API_KEY: missing.append("GEMINI_API_KEY")
     raise ValueError(f"Faltan keys en .env: {', '.join(missing)}")
 
-# Inicializar clientes
-deepseek_client = OpenAI(
-    api_key=DEEPSEEK_API_KEY,
-    base_url="https://api.deepseek.com",
-    timeout=TIMEOUT
-)
-
-mistral_client = Mistral(
-    api_key=MISTRAL_API_KEY,
-    timeout_ms=TIMEOUT * 1000
-)
-
+deepseek_client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url="https://api.deepseek.com", timeout=TIMEOUT)
+mistral_client = Mistral(api_key=MISTRAL_API_KEY, timeout_ms=TIMEOUT * 1000)
 gemini_client = genai.Client(api_key=GEMINI_API_KEY)
 
 print("✅ Todos los clientes inicializados correctamente")
 
 
-# ==================== CONFIGURACIÓN DE IDIOMAS DE ENTRADA ====================
+# ==================== CONFIGURACIÓN DE IDIOMAS ====================
 IDIOMAS_ENTRADA = {
-    "es": {
-        "nombre": "Español",
-        "codigo": "es",
-        "instruccion": "La descripción del producto está en español"
-    },
-    "en": {
-        "nombre": "Inglés", 
-        "codigo": "en",
-        "instruccion": "The product description is in English"
-    }
+    "es": {"nombre": "Español", "codigo": "es", "instruccion": "La descripción del producto está en español"},
+    "en": {"nombre": "Inglés", "codigo": "en", "instruccion": "The product description is in English"}
 }
 
 
@@ -90,7 +69,6 @@ MERCADOS = {
 def construir_prompt_post(descripcion_producto, mercado, idioma_entrada="es"):
     config = MERCADOS[mercado]
     idioma_config = IDIOMAS_ENTRADA.get(idioma_entrada, IDIOMAS_ENTRADA["es"])
-    
     return f"""
     Actúa como un experto en marketing localizado para {config['nombre_pais']}.
     
@@ -115,7 +93,6 @@ def construir_prompt_post(descripcion_producto, mercado, idioma_entrada="es"):
 def construir_prompt_email(descripcion_producto, mercado, idioma_entrada="es"):
     config = MERCADOS[mercado]
     idioma_config = IDIOMAS_ENTRADA.get(idioma_entrada, IDIOMAS_ENTRADA["es"])
-    
     return f"""
     Actúa como un redactor de email marketing especializado en {config['nombre_pais']}.
     
@@ -146,7 +123,6 @@ def construir_prompt_email(descripcion_producto, mercado, idioma_entrada="es"):
 def construir_prompt_eslogans(descripcion_producto, mercado, idioma_entrada="es"):
     config = MERCADOS[mercado]
     idioma_config = IDIOMAS_ENTRADA.get(idioma_entrada, IDIOMAS_ENTRADA["es"])
-    
     return f"""
 Eres un experto creativo publicitario especializado en el mercado de {config['nombre_pais']}.
 
@@ -323,6 +299,50 @@ def consultar_gemini(prompt, temperatura=0.7):
         }
 
 
+# ==================== TRADUCCIÓN ====================
+def traducir_texto(texto, idioma_origen, idioma_destino="es"):
+    """
+    Traduce un texto del idioma origen al idioma destino.
+    
+    Args:
+        texto (str): Texto a traducir
+        idioma_origen (str): 'ja', 'de', 'pt-BR'
+        idioma_destino (str): 'es' para español, 'en' para inglés
+    
+    Returns:
+        str: Texto traducido
+    """
+    if not texto:
+        return "⚠️ No hay texto para traducir"
+    
+    idiomas_origen = {"ja": "japonés", "de": "alemán", "pt-BR": "portugués de Brasil"}
+    nombre_origen = idiomas_origen.get(idioma_origen, "el idioma original")
+    
+    idiomas_destino = {"es": "español", "en": "inglés"}
+    nombre_destino = idiomas_destino.get(idioma_destino, "español")
+    
+    prompt_traduccion = f"Traduce el siguiente texto del {nombre_origen} al {nombre_destino}. Mantén el tono original. Responde SOLO con la traducción:\n\n{texto}"
+    
+    try:
+        respuesta = gemini_client.models.generate_content(
+            model="gemini-2.5-flash-lite",
+            contents=prompt_traduccion,
+            config={"temperature": 0.3, "max_output_tokens": 800}
+        )
+        return respuesta.text.strip()
+    except:
+        try:
+            respuesta = deepseek_client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[{"role": "user", "content": prompt_traduccion}],
+                temperature=0.3,
+                max_tokens=800
+            )
+            return respuesta.choices[0].message.content.strip()
+        except:
+            return f"❌ Error en traducción a {nombre_destino}"
+
+
 # ==================== FUNCIÓN PRINCIPAL ====================
 def generar_campana_completa(descripcion_producto, mercado, llm_seleccionado="todos", idioma_entrada="es"):
     if mercado not in MERCADOS:
@@ -375,7 +395,7 @@ def generar_campana_completa(descripcion_producto, mercado, llm_seleccionado="to
             traduccion = None
             if respuesta.get("exito") and respuesta_texto:
                 codigo_idioma = MERCADOS[mercado]["codigo_idioma"]
-                traduccion = traducir_a_espanol(respuesta_texto, codigo_idioma)
+                traduccion = traducir_texto(respuesta_texto, codigo_idioma, idioma_entrada)
             
             resultados["contenido"][tipo_contenido][nombre_modelo] = {
                 "respuesta": respuesta_texto,
@@ -386,36 +406,6 @@ def generar_campana_completa(descripcion_producto, mercado, llm_seleccionado="to
             }
     
     return resultados
-
-
-# ==================== TRADUCCIÓN ====================
-def traducir_a_espanol(texto, idioma_origen):
-    if not texto:
-        return "⚠️ No hay texto para traducir"
-    
-    idiomas = {"ja": "japonés", "de": "alemán", "pt-BR": "portugués de Brasil"}
-    nombre_idioma = idiomas.get(idioma_origen, "el idioma original")
-    
-    prompt_traduccion = f"Traduce el siguiente texto del {nombre_idioma} al español. Mantén el tono original. Responde SOLO con la traducción:\n\n{texto}"
-    
-    try:
-        respuesta = gemini_client.models.generate_content(
-            model="gemini-2.5-flash-lite",
-            contents=prompt_traduccion,
-            config={"temperature": 0.3, "max_output_tokens": 800}
-        )
-        return respuesta.text.strip()
-    except:
-        try:
-            respuesta = deepseek_client.chat.completions.create(
-                model="deepseek-chat",
-                messages=[{"role": "user", "content": prompt_traduccion}],
-                temperature=0.3,
-                max_tokens=800
-            )
-            return respuesta.choices[0].message.content.strip()
-        except:
-            return f"❌ Error en traducción"
 
 
 def comparar_llms_para_contenido(descripcion_producto, mercado, tipo_contenido="post"):
