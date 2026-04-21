@@ -278,7 +278,7 @@ def consultar_gemini(prompt, temperatura=0.7):
     inicio = time.time()
     try:
         respuesta = gemini_client.models.generate_content(
-            model="gemini-2.5-flash-lite",
+            model="gemini-3.1-flash-lite-preview",
             contents=prompt,
             config={"temperature": temperatura, "max_output_tokens": 500}
         )
