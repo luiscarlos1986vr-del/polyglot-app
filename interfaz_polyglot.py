@@ -102,6 +102,26 @@ st.markdown('<p class="company-name">⚡ Global-Gadgets ⚡</p>', unsafe_allow_h
 st.markdown('<p class="subtitle">Convierte tu producto en ventas globales 🏆<br>Campaña de Marketing para Brasil | Japón | Alemania</p>', unsafe_allow_html=True)
 
 
+# ==================== IDIOMA DE ENTRADA (PRIMERO) ====================
+st.markdown("---")
+st.markdown("### 🌐 Idioma de entrada")
+st.markdown("¿En qué idioma vas a describir tu producto?")
+
+col_idioma1, col_idioma2, col_idioma3 = st.columns([1, 2, 1])
+with col_idioma2:
+    idioma_entrada_opcion = st.radio(
+        "Idioma",
+        ["Español", "Inglés"],
+        index=0,
+        horizontal=True,
+        label_visibility="collapsed"
+    )
+    idioma_map = {"Español": "es", "Inglés": "en"}
+    idioma_entrada = idioma_map[idioma_entrada_opcion]
+
+st.markdown("---")
+
+
 # ==================== ENTRADA DEL PRODUCTO ====================
 with st.container():
     st.markdown('<div class="product-card">', unsafe_allow_html=True)
@@ -115,7 +135,7 @@ with st.container():
     st.markdown('</div>', unsafe_allow_html=True)
 
 
-# ==================== CONFIGURACIÓN ====================
+# ==================== CONFIGURACIÓN EN COLUMNAS ====================
 col1, col2 = st.columns(2)
 
 with col1:
@@ -156,22 +176,6 @@ with col2:
     llm = llm_opciones[llm_seleccionado]
 
 
-# ==================== IDIOMA DE ENTRADA ====================
-st.markdown("---")
-st.markdown("### 🌐 Idioma de entrada")
-
-col_idioma1, col_idioma2, col_idioma3 = st.columns([1, 2, 1])
-with col_idioma2:
-    idioma_entrada_opcion = st.radio(
-        "¿En qué idioma describes tu producto?",
-        ["Español", "Inglés"],
-        index=0,
-        horizontal=True
-    )
-    idioma_map = {"Español": "es", "Inglés": "en"}
-    idioma_entrada = idioma_map[idioma_entrada_opcion]
-
-
 # ==================== BOTÓN DE GENERACIÓN ====================
 col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
 with col_btn2:
@@ -192,6 +196,9 @@ def mostrar_comparacion(resultado, mercado_nombre):
     color_fondo = "#d8e7f0"
     color_borde = "#FFD700"
     color_texto = "#1a1a2e"
+    
+    # Texto de traducción según idioma seleccionado
+    texto_traduccion = "🇪🇸 Traducción al español" if idioma_entrada == "es" else "🇬🇧 English translation"
     
     col1, col2, col3 = st.columns(3)
     llms_orden = ["Deepseek", "Mistral", "Gemini"]
@@ -218,7 +225,7 @@ def mostrar_comparacion(resultado, mercado_nombre):
                 
                 if traduccion_post:
                     st.markdown("---")
-                    st.markdown("**🇪🇸 Traducción al español:**")
+                    st.markdown(f"**{texto_traduccion}:**")
                     container_trad = st.empty()
                     mostrar_con_efecto(traduccion_post, container_trad, velocidad=0.01)
                 
@@ -232,7 +239,7 @@ def mostrar_comparacion(resultado, mercado_nombre):
                         
                         if datos_eslogans.get("traduccion"):
                             st.markdown("---")
-                            st.markdown("**🇪🇸 Traducción al español:**")
+                            st.markdown(f"**{texto_traduccion}:**")
                             container_trad_eslogan = st.empty()
                             mostrar_con_efecto(datos_eslogans.get("traduccion", ""), container_trad_eslogan, velocidad=0.01)
                 
@@ -246,7 +253,7 @@ def mostrar_comparacion(resultado, mercado_nombre):
                         
                         if datos_email.get("traduccion"):
                             st.markdown("---")
-                            st.markdown("**🇪🇸 Traducción al español:**")
+                            st.markdown(f"**{texto_traduccion}:**")
                             container_trad_email = st.empty()
                             mostrar_con_efecto(datos_email.get("traduccion", ""), container_trad_email, velocidad=0.01)
                 
@@ -255,6 +262,9 @@ def mostrar_comparacion(resultado, mercado_nombre):
 
 def mostrar_resultados_normales(resultado, llm_usado_texto):
     st.markdown(f"### Resultados generados por {llm_usado_texto}")
+    
+    # Texto de traducción según idioma seleccionado
+    texto_traduccion = "🇪🇸 Traducción al español" if idioma_entrada == "es" else "🇬🇧 English translation"
     
     tab1, tab2, tab3 = st.tabs(["📱 Redes Sociales", "📧 Email Promocional", "🎯 Eslogans"])
     
@@ -267,7 +277,7 @@ def mostrar_resultados_normales(resultado, llm_usado_texto):
                         st.write(datos["respuesta"])
                         if datos.get("traduccion"):
                             st.markdown("---")
-                            st.markdown("**🇪🇸 Traducción al español:**")
+                            st.markdown(f"**{texto_traduccion}:**")
                             st.write(datos["traduccion"])
                         st.caption(f"⏱️ {datos['tiempo_ms']} ms")
     
@@ -280,7 +290,7 @@ def mostrar_resultados_normales(resultado, llm_usado_texto):
                         st.write(datos["respuesta"])
                         if datos.get("traduccion"):
                             st.markdown("---")
-                            st.markdown("**🇪🇸 Traducción al español:**")
+                            st.markdown(f"**{texto_traduccion}:**")
                             st.write(datos["traduccion"])
     
     with tab3:
@@ -292,7 +302,7 @@ def mostrar_resultados_normales(resultado, llm_usado_texto):
                         st.write(datos["respuesta"])
                         if datos.get("traduccion"):
                             st.markdown("---")
-                            st.markdown("**🇪🇸 Traducción al español:**")
+                            st.markdown(f"**{texto_traduccion}:**")
                             st.write(datos["traduccion"])
                         st.caption(f"⏱️ {datos['tiempo_ms']} ms")
 
