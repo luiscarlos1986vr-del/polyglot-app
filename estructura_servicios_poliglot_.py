@@ -323,6 +323,8 @@ def traducir_texto(texto, idioma_origen, idioma_destino="es"):
     
     prompt_traduccion = f"Traduce el siguiente texto del {nombre_origen} al {nombre_destino}. Mantén el tono original. Responde SOLO con la traducción:\n\n{texto}"
     
+    print(f"🔍 [TRADUCCIÓN] Traduciendo de {nombre_origen} a {nombre_destino}")  # ← LOG
+    
     try:
         respuesta = gemini_client.models.generate_content(
             model="gemini-2.5-flash-lite",
@@ -396,7 +398,8 @@ def generar_campana_completa(descripcion_producto, mercado, llm_seleccionado="to
             if respuesta.get("exito") and respuesta_texto:
                 codigo_idioma = MERCADOS[mercado]["codigo_idioma"]
                 traduccion = traducir_texto(respuesta_texto, codigo_idioma, idioma_entrada)
-            
+                print(f"🔍 [DEBUG] Traducción solicitada a: {idioma_entrada}")  # ← LOG
+                
             resultados["contenido"][tipo_contenido][nombre_modelo] = {
                 "respuesta": respuesta_texto,
                 "traduccion": traduccion,
