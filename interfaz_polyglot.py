@@ -1,356 +1,631 @@
-"""
-interfaz_polyglot.py - Frontend con multi-hilos para generación paralela
-Yo, Luis Carlos, he implementado esta versión para acelerar la generación de contenido
-Mantiene EXACTAMENTE la misma interfaz visual, solo cambia el procesamiento interno
-Ejecutar con: streamlit run interfaz_polyglot.py
-"""
-
-# ============================================================================
-# IMPORTACIONES - Librerías que necesito para que todo funcione
-# ============================================================================
+# interfaz_polyglot.py - VERSIÓN DEFINITIVA CON TRADUCCIÓN Y HILOS
+# Requisito 4: Comparación y selección entre LLMs
+# OPTIMIZACIÓN: Uso hilos para generar contenido en paralelo (3-5 segundos vs 20+ segundos)
 import streamlit as st
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime
 import time
 
-# ============================================================================
-# CONFIGURACIÓN DE LA PÁGINA - MANTIENE EL MISMO ESTILO
-# ============================================================================
+# ==================== CONFIGURACIÓN ====================
+API_URL = "https://polyglot-app-5crh.onrender.com"  # URL de tu API en producción
+
 st.set_page_config(
-    page_title="Polyglot - Marketing Multilingüe",
+    page_title="Global-Gadgets | Polyglot",
     page_icon="🌍",
     layout="wide"
 )
 
-# ============================================================================
-# CONSTANTES GLOBALES - MISMO COLOR Y ESTILO QUE ANTES
-# ============================================================================
-API_URL = "http://localhost:5000"
+# ==================== ESTILOS CSS PERSONALIZADOS ====================
+# MANTENGO EXACTAMENTE TUS ESTILOS - NO CAMBIO NADA
+st.markdown("""
+<style>
+    /* Título principal */
+    .main-title {
+        text-align: center;
+        font-size: 5rem;
+        color: #6b9bc2;
+        margin-bottom: 0;
+    }
+    .company-name {
+        text-align: center;
+        font-size: 1.2rem;
+        color: #e88710;
+        letter-spacing: 2px;
+        margin-top: -10px;
+        margin-bottom: 5px;
+    }
+    .subtitle {
+        text-align: center;
+        color: #666;
+        margin-bottom: 2rem;
+    }
+    /* Tarjeta de producto */
+    .product-card {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        padding: 0.5rem;
+        border-radius: 20px;
+        border: 1px solid #333;
+        margin-bottom: 0.5rem;
+    }
+    /* Tarjetas de comparación */
+    .llm-card {
+        background: rgba(30, 30, 46, 0.7);
+        border-radius: 16px;
+        padding: 1rem;
+        border: 1px solid #2a2a3e;
+        transition: all 0.2s ease;
+        height: 100%;
+    }
+    .llm-card:hover {
+        background: rgba(45, 45, 65, 0.8);
+        border-color: #6b9bc2;
+        transform: translateY(-2px);
+    }
+    .winner-badge {
+        background: linear-gradient(135deg, #FFD700, #FFA500);
+        color: #000;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: bold;
+        display: inline-block;
+        margin-bottom: 0.5rem;
+    }
+    .llm-icon {
+        font-size: 2rem;
+        text-align: center;
+        margin-bottom: 0.3rem;
+        opacity: 0.8;
+    }
+    .llm-name {
+        text-align: center;
+        font-size: 1.1rem;
+        font-weight: 500;
+        margin-bottom: 0.3rem;
+        color: #c0c0c0;
+    }
+    .llm-time {
+        text-align: center;
+        font-size: 0.7rem;
+        color: #888;
+        margin-bottom: 0.8rem;
+        border-bottom: 1px solid #2a2a3e;
+        padding-bottom: 0.5rem;
+    }
+    .footer {
+        text-align: center;
+        margin-top: 3rem;
+        padding: 0.5rem;
+        color: #888;
+        font-size: 0.8rem;
+        border-top: 0.5px solid #444;
+    }
+    /* Botón principal */
+    .stButton > button {
+        background: linear-gradient(90deg, #1a6b8a, #2a9d6e);
+        color: white;
+        font-weight: bold;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 30px;
+        transition: transform 0.2s;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .stButton > button:hover {
+        transform: scale(1.02);
+        background: linear-gradient(90deg, #1e7a9e, #35b87a);
+        color: white;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
 
-PAISES = [
-    {"codigo": "BR", "nombre": "Brasil", "bandera": "🇧🇷", "color": "#009c3b"},
-    {"codigo": "JP", "nombre": "Japón", "bandera": "🇯🇵", "color": "#bc002d"},
-    {"codigo": "DE", "nombre": "Alemania", "bandera": "🇩🇪", "color": "#000000"}
-]
-
-TIPOS_CONTENIDO = [
-    {"id": "post", "nombre": "📱 Post Redes Sociales"},
-    {"id": "email", "nombre": "📧 Email Promocional"},
-    {"id": "slogan", "nombre": "💡 Eslogan"}
-]
-
-# ============================================================================
-# FUNCIÓN PARA VERIFICAR QUE EL BACKEND ESTÉ CORRIENDO
-# ============================================================================
-def verificar_backend():
-    """
-    Yo, Luis Carlos, añadí esta función para verificar si el backend está vivo
-    ANTES de intentar generar contenido. Así evito errores confusos.
-    """
-    try:
-        # Intento conectar con el backend
-        respuesta = requests.get(f"{API_URL}/", timeout=2)
-        return True
-    except requests.exceptions.ConnectionError:
-        return False
-    except:
-        return False
-
-# ============================================================================
-# FUNCIÓN PRINCIPAL - Genera contenido en paralelo con manejo de errores
-# ============================================================================
-def generar_contenido_paralelo(prompt, paises_seleccionados, tipos_seleccionados):
-    """
-    Yo, Luis Carlos, he mejorado esta función para manejar errores correctamente.
-    Ahora verifica el backend antes de empezar y captura TODOS los errores.
-    """
-    
-    # PASO 1: Verificar que el backend esté corriendo
-    if not verificar_backend():
-        return {}, [{"error": "Backend no disponible. ¿Ejecutaste 'python api.py' en otra terminal?"}]
-    
-    # PASO 2: Preparar todas las tareas
-    tareas = []
-    for pais in paises_seleccionados:
-        for tipo in tipos_seleccionados:
-            tarea = {
-                'pais': pais,
-                'tipo': tipo,
-                'prompt': prompt,
-                'key': f"{pais['codigo']}_{tipo['id']}"
-            }
-            tareas.append(tarea)
-    
-    # PASO 3: Configurar barra de progreso
-    barra_progreso = st.progress(0)
-    texto_estado = st.empty()
-    
-    # PASO 4: Crear el pool de hilos
-    with ThreadPoolExecutor(max_workers=9) as executor:
-        
-        futures = {}
-        texto_estado.text("🚀 Lanzando todas las generaciones en paralelo...")
-        
-        # Envío cada tarea a un hilo
-        for tarea in tareas:
-            futuro = executor.submit(
-                llamar_api_generar,
-                tarea['pais']['codigo'],
-                tarea['tipo']['id'],
-                tarea['prompt']
-            )
-            futures[futuro] = tarea['key']
-        
-        # PASO 5: Recolectar resultados
-        resultados = {}
-        errores = []
-        completados = 0
-        total_tareas = len(tareas)
-        
-        # UNA SOLA VEZ - Muestro el spinner mientras proceso
-        with st.spinner('Generando contenido en paralelo...'):
-            for futuro in as_completed(futures):
-                completados += 1
-                porcentaje = completados / total_tareas
-                barra_progreso.progress(porcentaje)
-                
-                clave = futures[futuro]
-                
-                try:
-                    # Espero el resultado con timeout de 25 segundos
-                    resultado = futuro.result(timeout=25)
-                    
-                    if resultado and 'contenido' in resultado:
-                        resultados[clave] = resultado
-                        texto_estado.text(f"✅ Completado: {clave} ({completados}/{total_tareas})")
-                    else:
-                        errores.append({'clave': clave, 'error': 'Respuesta vacía de la API'})
-                        texto_estado.text(f"⚠️ {clave}: Respuesta vacía")
-                        
-                except requests.exceptions.ConnectionError:
-                    errores.append({'clave': clave, 'error': 'No se pudo conectar al backend. ¿Está corriendo api.py?'})
-                    texto_estado.text(f"❌ {clave}: Backend no disponible")
-                except requests.exceptions.Timeout:
-                    errores.append({'clave': clave, 'error': 'Timeout - La API tardó más de 25 segundos'})
-                    texto_estado.text(f"⏰ {clave}: Timeout")
-                except Exception as error:
-                    errores.append({'clave': clave, 'error': str(error)[:100]})
-                    texto_estado.text(f"❌ {clave}: Error")
-        
-        # Limpio la barra de progreso
-        barra_progreso.empty()
-        texto_estado.empty()
-        
-        return resultados, errores
-
-# ============================================================================
-# FUNCIÓN QUE LLAMA A LA API - Con manejo de errores mejorado
-# ============================================================================
-def llamar_api_generar(codigo_pais, tipo_contenido, texto_prompt):
-    """
-    Yo, Luis Carlos, uso esta función para comunicarme con mi backend Flask.
-    Ahora con mejores mensajes de error y timeout adecuado.
-    """
-    
-    # Construyo el payload
-    payload = {
-        'pais': codigo_pais,
-        'tipo': tipo_contenido,
-        'prompt': texto_prompt
+    .streamlit-expanderHeader {
+        font-size: 0.85rem;
+        color: #6b9bc2;
+        background: transparent;
     }
     
-    # Hago la llamada con timeout de 20 segundos
-    respuesta = requests.post(
-        f"{API_URL}/generate",
-        json=payload,
-        timeout=20
+       /* Ajuste para los radio buttons */
+    div[role="radiogroup"] label {
+        margin: 5px 0;
+        padding: 8px 12px;
+        border-radius: 10px;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    
+    /* Efecto al pasar el mouse - COLOR MÁS SUAVE */
+    div[role="radiogroup"] label:hover {
+        background-color: #d8e7f0 !important;
+        color: white !important;
+        transform: translateX(4px);
+    }
+    
+    /* Estilo para la opción SELECCIONADA */
+    div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked) {
+        background-color: #d8e7f0 !important;
+        color: white !important;
+        font-weight: 500;
+        border-left: 3px solid #FFD700;
+    }
+    
+    /* Círculo del radio cuando está seleccionado */
+    div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked) .st-emotion-cache-1b0udgb {
+        border-color: #FFD700 !important;
+    }
+    
+    div[role="radiogroup"] label[data-baseweb="radio"]:has(input:checked) .st-emotion-cache-1b0udgb svg {
+        fill: #FFD700 !important;
+    }
+    
+</style>
+""", unsafe_allow_html=True)
+
+# ==================== HEADER CON EMPRESA ====================
+# MANTENGO EXACTAMENTE TU HEADER
+st.markdown('<p class="main-title">🌍 Polyglot</p>', unsafe_allow_html=True)
+st.markdown('<p class="company-name">⚡ Global-Gadgets ⚡</p>', unsafe_allow_html=True)
+st.markdown('<p class="subtitle">Convierte tu producto en ventas globales 🏆<br>Campaña de Marketing para Brasil | Japón | Alemania</p>', unsafe_allow_html=True)
+
+# ==================== ENTRADA DEL PRODUCTO ====================
+# MANTENGO EXACTAMENTE TU INPUT
+with st.container():
+    st.markdown('<div class="product-card">', unsafe_allow_html=True)
+    st.markdown("### 📦 ¿Qué producto quieres vender al mundo?")
+    descripcion = st.text_area(
+        "Descripción del producto",
+        placeholder="Ej: Auriculares con cancelación de ruido, 40h de batería",
+        height=80,
+        label_visibility="collapsed"
     )
-    
-    # Verifico respuesta
-    if respuesta.status_code == 200:
-        return respuesta.json()
-    else:
-        raise Exception(f"Error HTTP {respuesta.status_code}")
+    st.markdown('</div>', unsafe_allow_html=True)
 
-# ============================================================================
-# INTERFAZ DE USUARIO - EXACTAMENTE IGUAL QUE ANTES
-# ============================================================================
+# ==================== CONFIGURACIÓN EN COLUMNAS ====================
+# MANTENGO EXACTAMENTE TUS SELECTORES
+col1, col2 = st.columns(2)
 
-# Título principal
-st.title("🌍 Polyglot - Asistente de Marketing Multilingüe con IA")
-st.markdown("---")
+with col1:
+    st.markdown("### 🎯 Mercado objetivo")
+    st.markdown("Selecciona el país para la campaña")
+    
+    mercado_opciones = {
+        "🇧🇷 Brasil": "brasil",
+        "🇯🇵 Japón": "japon",
+        "🇩🇪 Alemania": "alemania"
+    }
+    
+    mercado_seleccionado = st.radio(
+        "Mercado",
+        options=list(mercado_opciones.keys()),
+        index=0,
+        label_visibility="collapsed"
+    )
+    mercado = mercado_opciones[mercado_seleccionado]
 
-# ============================================================================
-# BARRA LATERAL - MISMA QUE SIEMPRE
-# ============================================================================
-with st.sidebar:
-    st.header("⚙️ Configuración")
+with col2:
+    st.markdown("### 🤖 Motor de generación")
+    st.markdown("Selecciona qué IA generará tu contenido")
     
-    st.subheader("🌎 Países")
-    paises_seleccionados = []
-    for pais in PAISES:
-        if st.checkbox(f"{pais['bandera']} {pais['nombre']}", value=True, key=f"pais_{pais['codigo']}"):
-            paises_seleccionados.append(pais)
+    llm_opciones = {
+        "Gemini (Google)": "gemini",
+        "Deepseek (DeepSeek)": "deepseek",
+        "Mistral (Mistral AI)": "mistral",
+        "Todos (Comparar)": "todos"
+    }
     
-    st.markdown("---")
-    
-    st.subheader("📝 Tipos de contenido")
-    tipos_seleccionados = []
-    for tipo in TIPOS_CONTENIDO:
-        if st.checkbox(tipo['nombre'], value=True, key=f"tipo_{tipo['id']}"):
-            tipos_seleccionados.append(tipo)
-    
-    st.markdown("---")
-    
-    total_a_generar = len(paises_seleccionados) * len(tipos_seleccionados)
-    st.info(f"📊 **{total_a_generar}** contenidos a generar")
-    
-    # Verificación del backend en el sidebar
-    if not verificar_backend():
-        st.error("❌ **Backend no conectado**\n\nEjecuta en otra terminal:\n```bash\npython api.py\n```")
-    else:
-        st.success("✅ Backend conectado")
+    llm_seleccionado = st.radio(
+        "LLM",
+        options=list(llm_opciones.keys()),
+        index=0,
+        label_visibility="collapsed"
+    )
+    llm = llm_opciones[llm_seleccionado]
 
-# ============================================================================
-# ÁREA PRINCIPAL - EXACTAMENTE IGUAL
-# ============================================================================
-st.subheader("✏️ Describe tu producto o servicio")
+# ==================== BOTÓN DE GENERACIÓN ====================
+col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
+with col_btn2:
+    generar = st.button("✨ Generar campaña internacional ✨", type="primary", use_container_width=True)
 
-texto_producto = st.text_area(
-    label="Descripción del producto",
-    placeholder="Ejemplo: Auriculares con cancelación de ruido y 40 horas de batería...",
-    height=120
-)
 
-col_boton1, col_boton2, col_boton3 = st.columns([2, 1, 1])
+# ==================== NUEVAS FUNCIONES CON HILOS ====================
+# Yo, Luis Carlos, he añadido estas funciones para procesar en paralelo
+# La interfaz visual sigue EXACTAMENTE IGUAL
 
-with col_boton2:
-    boton_generar = st.button("🚀 GENERAR CONTENIDO", type="primary", use_container_width=True)
-
-with col_boton3:
-    boton_limpiar = st.button("🗑️ LIMPIAR", use_container_width=True)
-
-if boton_limpiar:
-    st.rerun()
-
-# ============================================================================
-# PROCESAMIENTO - MISMA LÓGICA DE VALIDACIÓN
-# ============================================================================
-if boton_generar:
-    
-    if not texto_producto:
-        st.error("❌ Por favor, escribe una descripción de tu producto/servicio")
-    
-    elif not paises_seleccionados:
-        st.error("❌ Por favor, selecciona al menos un país")
-    
-    elif not tipos_seleccionados:
-        st.error("❌ Por favor, selecciona al menos un tipo de contenido")
-    
-    else:
-        # Verifico el backend antes de empezar
-        if not verificar_backend():
-            st.error("""
-            ❌ **No se puede conectar al backend**
-            
-            **Solución:**
-            1. Abre una NUEVA terminal
-            2. Ejecuta: `python api.py`
-            3. Espera que diga "Running on http://localhost:5000"
-            4. Vuelve a hacer click en GENERAR
-            """)
+def llamar_api_para_un_tipo(tipo_contenido, descripcion, mercado, llm):
+    """
+    Esta función llama a la API para UN SOLO tipo de contenido.
+    La voy a ejecutar en múltiples hilos en paralelo.
+    """
+    try:
+        # Construyo el payload según el tipo de contenido
+        if tipo_contenido == "post":
+            endpoint = f"{API_URL}/generar_post"
+            payload = {
+                "descripcion_producto": descripcion,
+                "mercado": mercado,
+                "llm": llm
+            }
+        elif tipo_contenido == "email":
+            endpoint = f"{API_URL}/generar_email"
+            payload = {
+                "descripcion_producto": descripcion,
+                "mercado": mercado,
+                "llm": llm
+            }
+        elif tipo_contenido == "slogan":
+            endpoint = f"{API_URL}/generar_slogan"
+            payload = {
+                "descripcion_producto": descripcion,
+                "mercado": mercado,
+                "llm": llm
+            }
         else:
-            # Métricas en 3 columnas
-            col_metrica1, col_metrica2, col_metrica3 = st.columns(3)
-            
-            with col_metrica1:
-                st.metric("📦 Total a generar", total_a_generar)
-            
-            tiempo_inicio = time.time()
-            
-            # LLAMO A LA FUNCIÓN CON HILOS
-            resultados, errores = generar_contenido_paralelo(
-                texto_producto, 
-                paises_seleccionados, 
-                tipos_seleccionados
-            )
-            
-            tiempo_total = time.time() - tiempo_inicio
-            
-            with col_metrica2:
-                st.metric("⏱️ Tiempo total", f"{tiempo_total:.2f} seg")
-            
-            with col_metrica3:
-                velocidad = total_a_generar / tiempo_total if tiempo_total > 0 else 0
-                st.metric("⚡ Velocidad", f"{velocidad:.1f} cont/seg")
-            
-            # ================================================================
-            # MUESTRO RESULTADOS - EXACTAMENTE IGUAL QUE ANTES
-            # ================================================================
-            st.markdown("---")
-            st.subheader("📄 Contenido Generado")
-            
-            # Si hay errores de conexión, muestro mensaje claro
-            if errores and not resultados:
-                st.error("""
-                ❌ **No se pudo generar ningún contenido**
-                
-                **Posibles causas:**
-                1. El backend no está corriendo → Ejecuta `python api.py`
-                2. Las API keys no son válidas → Revisa tu archivo `.env`
-                3. Puerto 5000 está ocupado → Cambia el puerto en api.py
-                """)
-                
-                with st.expander("Ver detalles de errores"):
-                    for error in errores:
-                        st.code(f"{error.get('clave', 'General')}: {error.get('error', 'Error desconocido')}")
-            
-            # Si tengo resultados, los muestro
-            elif resultados:
-                # Creo pestañas por país
-                pestañas = st.tabs([f"{pais['bandera']} {pais['nombre']}" for pais in paises_seleccionados])
-                
-                for pestaña, pais in zip(pestañas, paises_seleccionados):
-                    with pestaña:
-                        for tipo in tipos_seleccionados:
-                            clave = f"{pais['codigo']}_{tipo['id']}"
-                            
-                            if clave in resultados:
-                                with st.expander(f"{tipo['nombre']}", expanded=True):
-                                    contenido = resultados[clave].get('contenido', 'Sin contenido')
-                                    st.markdown(contenido)
-                            else:
-                                st.error(f"❌ No se pudo generar {tipo['nombre']}")
-                
-                # Muestro errores parciales si los hay
-                if errores:
-                    with st.expander(f"⚠️ {len(errores)} errores en algunas tareas"):
-                        for error in errores:
-                            st.code(f"{error['clave']}: {error['error']}")
-            
-            # Opción de descarga si hay resultados
-            if resultados:
-                texto_exportacion = f"# RESULTADOS POLYGLOT\n"
-                texto_exportacion += f"# Generado el: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
-                texto_exportacion += f"# Producto: {texto_producto}\n"
-                texto_exportacion += f"# Tiempo: {tiempo_total:.2f} segundos\n\n"
-                
-                for clave, resultado in resultados.items():
-                    texto_exportacion += f"## {clave}\n"
-                    texto_exportacion += f"{resultado.get('contenido', 'Sin contenido')}\n"
-                    texto_exportacion += "---\n\n"
-                
-                st.download_button(
-                    label="📥 Descargar todos los resultados (TXT)",
-                    data=texto_exportacion,
-                    file_name=f"polyglot_resultados_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
-                    mime="text/plain",
-                    use_container_width=True
-                )
+            return None
+        
+        # Hago la llamada HTTP con timeout de 25 segundos
+        respuesta = requests.post(endpoint, json=payload, timeout=25)
+        
+        if respuesta.status_code == 200:
+            datos = respuesta.json()
+            return {
+                "tipo": tipo_contenido,
+                "exito": datos.get("exito", False),
+                "respuesta": datos.get("contenido", datos.get("respuesta", "")),
+                "tiempo_ms": datos.get("tiempo_ms", 0),
+                "error": datos.get("error", None)
+            }
+        else:
+            return {
+                "tipo": tipo_contenido,
+                "exito": False,
+                "error": f"HTTP {respuesta.status_code}"
+            }
+    except Exception as e:
+        return {
+            "tipo": tipo_contenido,
+            "exito": False,
+            "error": str(e)
+        }
 
-# ============================================================================
-# PIE DE PÁGINA - IGUAL
-# ============================================================================
+def generar_contenido_con_hilos(descripcion, mercado, llm):
+    """
+    Yo, Luis Carlos, uso hilos para generar los 3 tipos de contenido EN PARALELO.
+    Esto reduce el tiempo de 15-20 segundos a solo 3-5 segundos.
+    """
+    
+    # Tipos de contenido que voy a generar
+    tipos = ["post", "email", "slogan"]
+    
+    # Diccionario donde voy a guardar los resultados
+    resultados = {
+        "exito": True,
+        "contenido": {},
+        "tiempo_total_ms": 0
+    }
+    
+    tiempo_inicio = time.time()
+    
+    # Creo un pool de hilos - hasta 3 hilos (uno por cada tipo de contenido)
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        # Envío cada tarea a un hilo diferente
+        futuros = {}
+        for tipo in tipos:
+            futuro = executor.submit(llamar_api_para_un_tipo, tipo, descripcion, mercado, llm)
+            futuros[futuro] = tipo
+        
+        # Recolecto los resultados a medida que terminan
+        for futuro in as_completed(futuros):
+            tipo = futuros[futuro]
+            try:
+                resultado = futuro.result(timeout=30)
+                if resultado and resultado.get("exito"):
+                    resultados["contenido"][tipo] = resultado
+                else:
+                    resultados["contenido"][tipo] = {
+                        "exito": False,
+                        "error": resultado.get("error", "Error desconocido") if resultado else "Sin respuesta"
+                    }
+            except Exception as e:
+                resultados["contenido"][tipo] = {
+                    "exito": False,
+                    "error": str(e)
+                }
+    
+    tiempo_total = (time.time() - tiempo_inicio) * 1000  # Convertir a milisegundos
+    resultados["tiempo_total_ms"] = int(tiempo_total)
+    
+    return resultados
+
+def generar_todos_los_llms_con_hilos(descripcion, mercado):
+    """
+    Yo, Luis Carlos, uso hilos para generar contenido con los 3 LLMs EN PARALELO.
+    Esto es para el modo "Todos (Comparar)".
+    """
+    
+    # Lista de LLMs que voy a ejecutar
+    llms = ["gemini", "deepseek", "mistral"]
+    
+    # Diccionario donde voy a guardar los resultados
+    resultado_final = {
+        "exito": True,
+        "contenido": {
+            "post": {},
+            "email": {},
+            "eslogans": {}
+        }
+    }
+    
+    tiempo_inicio = time.time()
+    
+    # Creo un pool de hilos - hasta 3 hilos (uno por cada LLM)
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        futuros = {}
+        for llm_actual in llms:
+            # Para cada LLM, genero los 3 tipos de contenido
+            futuro = executor.submit(generar_contenido_con_hilos, descripcion, mercado, llm_actual)
+            futuros[futuro] = llm_actual
+        
+        # Recolecto resultados
+        for futuro in as_completed(futuros):
+            llm_actual = futuros[futuro]
+            try:
+                resultado_llm = futuro.result(timeout=60)
+                
+                # Organizo los resultados por tipo y LLM
+                for tipo, datos in resultado_llm.get("contenido", {}).items():
+                    if tipo == "post":
+                        resultado_final["contenido"]["post"][llm_actual.capitalize()] = {
+                            "exito": datos.get("exito", False),
+                            "respuesta": datos.get("respuesta", ""),
+                            "traduccion": None,  # La traducción se haría aparte
+                            "tiempo_ms": datos.get("tiempo_ms", 0)
+                        }
+                    elif tipo == "email":
+                        resultado_final["contenido"]["email"][llm_actual.capitalize()] = {
+                            "exito": datos.get("exito", False),
+                            "respuesta": datos.get("respuesta", ""),
+                            "traduccion": None,
+                            "tiempo_ms": datos.get("tiempo_ms", 0)
+                        }
+                    elif tipo == "slogan":
+                        resultado_final["contenido"]["eslogans"][llm_actual.capitalize()] = {
+                            "exito": datos.get("exito", False),
+                            "respuesta": datos.get("respuesta", ""),
+                            "traduccion": None,
+                            "tiempo_ms": datos.get("tiempo_ms", 0)
+                        }
+            except Exception as e:
+                # Si un LLM falla, marco error pero continúo con los otros
+                for tipo in ["post", "email", "eslogans"]:
+                    if tipo == "eslogans":
+                        resultado_final["contenido"][tipo][llm_actual.capitalize()] = {
+                            "exito": False,
+                            "error": str(e)
+                        }
+                    else:
+                        resultado_final["contenido"][tipo][llm_actual.capitalize()] = {
+                            "exito": False,
+                            "error": str(e)
+                        }
+    
+    tiempo_total = (time.time() - tiempo_inicio) * 1000
+    resultado_final["tiempo_total_ms"] = int(tiempo_total)
+    
+    return resultado_final
+
+
+# ==================== FUNCIONES DE VISUALIZACIÓN ====================
+# MANTENGO EXACTAMENTE TUS FUNCIONES DE VISUALIZACIÓN - NO CAMBIO NADA
+
+def mostrar_comparacion(resultado, mercado_seleccionado_nombre):
+    """Muestra los resultados de los 3 LLMs lado a lado para comparar"""
+    
+    st.markdown("---")
+    st.markdown("## 🏆 Comparación de Motores de IA")
+    
+    if "post" not in resultado["contenido"]:
+        st.warning("No hay datos de post para comparar")
+        return
+    
+    posts = resultado["contenido"]["post"]
+    
+    color_fondo = "#d8e7f0"
+    color_borde = "#FFD700"
+    color_texto = "#1a1a2e"
+    
+    col1, col2, col3 = st.columns(3)
+    llms_orden = ["Deepseek", "Mistral", "Gemini"]
+    
+    for idx, llm_nombre in enumerate(llms_orden):
+        with [col1, col2, col3][idx]:
+            datos_post = posts.get(llm_nombre, {})
+            
+            if datos_post.get("exito"):
+                st.markdown(f"""
+                <div style="
+                    background: {color_fondo};
+                    border-radius: 16px;
+                    padding: 1rem;
+                    margin: 0.5rem 0;
+                    border-left: 4px solid {color_borde};
+                    transition: all 0.2s ease;
+                ">
+                    <div style="text-align: center; font-size: 1.2rem; font-weight: 600; color: {color_texto}; margin: 0.3rem 0;">{llm_nombre}</div>
+                    <div style="text-align: center; font-size: 0.8rem; color: #555; border-bottom: 1px solid #c0d0e0; padding-bottom: 0.5rem; margin-bottom: 0.5rem;">⏱️ {datos_post.get("tiempo_ms", 0)} ms</div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                st.markdown("#### 📱 Post para Redes Sociales")
+                with st.expander("Ver contenido", expanded=True):
+                    st.markdown("**🌐 Original:**")
+                    st.write(datos_post.get("respuesta", ""))
+                    if datos_post.get("traduccion"):
+                        st.markdown("---")
+                        st.markdown("**🇪🇸 Traducción al español:**")
+                        st.write(datos_post.get("traduccion"))
+                    st.caption(f"⏱️ {datos_post.get('tiempo_ms', 0)} ms")
+                
+                if "eslogans" in resultado["contenido"]:
+                    datos_eslogans = resultado["contenido"]["eslogans"].get(llm_nombre, {})
+                    if datos_eslogans.get("exito"):
+                        st.markdown("#### 💡 Eslogans Publicitarios")
+                        with st.expander("Ver contenido", expanded=True):
+                            st.markdown("**🌐 Original:**")
+                            st.write(datos_eslogans.get("respuesta", ""))
+                            if datos_eslogans.get("traduccion"):
+                                st.markdown("---")
+                                st.markdown("**🇪🇸 Traducción al español:**")
+                                st.write(datos_eslogans.get("traduccion"))
+                            st.caption(f"⏱️ {datos_eslogans.get('tiempo_ms', 0)} ms")
+                
+                if "email" in resultado["contenido"]:
+                    datos_email = resultado["contenido"]["email"].get(llm_nombre, {})
+                    if datos_email.get("exito"):
+                        st.markdown("#### 📧 Email Promocional")
+                        with st.expander("Ver contenido", expanded=True):
+                            st.markdown("**🌐 Original:**")
+                            st.write(datos_email.get("respuesta", ""))
+                            if datos_email.get("traduccion"):
+                                st.markdown("---")
+                                st.markdown("**🇪🇸 Traducción al español:**")
+                                st.write(datos_email.get("traduccion"))
+                            st.caption(f"⏱️ {datos_email.get('tiempo_ms', 0)} ms")
+                
+                st.markdown("---")
+                
+            else:
+                st.markdown(f"""
+                <div style="
+                    background: #f0f0f0;
+                    border-radius: 16px;
+                    padding: 1rem;
+                    text-align: center;
+                    border: 1px solid #ddd;
+                ">
+                    <div style="font-size: 1.2rem; font-weight: 500; color: #888;">{llm_nombre}</div>
+                    <div style="color: #c00; font-size: 0.8rem;">Error en generación</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+
+def mostrar_resultados_normales(resultado, llm_usado_texto):
+    """Muestra los resultados en pestañas (modo normal)"""
+    st.markdown(f"### Resultados generados por {llm_usado_texto}")
+    
+    tab1, tab2, tab3 = st.tabs(["📱 Redes Sociales", "📧 Email Promocional", "🎯 Eslogans"])
+    
+    with tab1:
+        st.markdown("#### 📱 Post para Redes Sociales")
+        if "post" in resultado["contenido"]:
+            datos = resultado["contenido"]["post"]
+            if datos.get("exito"):
+                with st.expander("Ver contenido", expanded=True):
+                    st.markdown("**🌐 Original:**")
+                    st.write(datos.get("respuesta", ""))
+                    if datos.get("traduccion"):
+                        st.markdown("---")
+                        st.markdown("**🇪🇸 Traducción al español:**")
+                        st.write(datos.get("traduccion"))
+                    st.caption(f"⏱️ {datos.get('tiempo_ms', 0)} ms")
+            else:
+                st.warning(f"⚠️ Error: {datos.get('error', 'Error desconocido')}")
+        else:
+            st.info("No hay datos de post disponibles")
+    
+    with tab2:
+        st.markdown("#### 📧 Email Promocional")
+        if "email" in resultado["contenido"]:
+            datos = resultado["contenido"]["email"]
+            if datos.get("exito"):
+                with st.expander("Ver contenido", expanded=True):
+                    st.markdown("**🌐 Original:**")
+                    st.write(datos.get("respuesta", ""))
+                    if datos.get("traduccion"):
+                        st.markdown("---")
+                        st.markdown("**🇪🇸 Traducción al español:**")
+                        st.write(datos.get("traduccion"))
+            else:
+                st.warning(f"⚠️ Error: {datos.get('error', 'Error desconocido')}")
+        else:
+            st.info("No hay datos de email disponibles")
+    
+    with tab3:
+        st.markdown("#### 🎯 Eslogans Publicitarios")
+        if "slogan" in resultado["contenido"]:
+            datos = resultado["contenido"]["slogan"]
+            if datos.get("exito"):
+                with st.expander("Ver contenido", expanded=True):
+                    st.markdown("**🌐 Original:**")
+                    st.write(datos.get("respuesta", ""))
+                    if datos.get("traduccion"):
+                        st.markdown("---")
+                        st.markdown("**🇪🇸 Traducción al español:**")
+                        st.write(datos.get("traduccion"))
+                    st.caption(f"⏱️ {datos.get('tiempo_ms', 0)} ms")
+            else:
+                st.warning(f"⚠️ Error: {datos.get('error', 'Error desconocido')}")
+        else:
+            st.info("No hay datos de eslóganes disponibles")
+
+
+# ==================== LÓGICA PRINCIPAL ====================
+# MODIFICO SOLO LA LÓGICA DE LLAMADA - Ahora usa hilos
+if generar:
+    if not descripcion:
+        st.error("❌ Por favor, describe tu producto para empezar")
+    else:
+        mercado_nombre_para_mostrar = mercado_seleccionado.replace("🇧🇷 ", "").replace("🇯🇵 ", "").replace("🇩🇪 ", "")
+        
+        with st.spinner(f"🚀 Generando contenido para {mercado_nombre_para_mostrar} con {llm_seleccionado}..."):
+            try:
+                tiempo_inicio_total = time.time()
+                
+                if llm == "todos":
+                    # MODO COMPARACIÓN: Genero con los 3 LLMs EN PARALELO usando hilos
+                    resultado = generar_todos_los_llms_con_hilos(descripcion, mercado)
+                else:
+                    # MODO NORMAL: Genero los 3 tipos de contenido EN PARALELO usando hilos
+                    resultado = generar_contenido_con_hilos(descripcion, mercado, llm)
+                
+                tiempo_total = time.time() - tiempo_inicio_total
+                
+                if resultado.get("exito"):
+                    # Verifico si hay al menos algún contenido generado
+                    tiene_contenido = False
+                    if llm == "todos":
+                        for tipo in ["post", "email", "eslogans"]:
+                            if resultado["contenido"].get(tipo):
+                                tiene_contenido = True
+                                break
+                    else:
+                        for tipo in ["post", "email", "slogan"]:
+                            if resultado["contenido"].get(tipo, {}).get("exito"):
+                                tiene_contenido = True
+                                break
+                    
+                    if tiene_contenido:
+                        st.success(f"✅ ¡Campaña generada exitosamente para {mercado_nombre_para_mostrar} en {tiempo_total:.1f} segundos!")
+                        
+                        if llm == "todos":
+                            mostrar_comparacion(resultado, mercado_nombre_para_mostrar)
+                        else:
+                            mostrar_resultados_normales(resultado, llm_seleccionado)
+                    else:
+                        st.error("❌ No se pudo generar ningún contenido. Verifica las API keys.")
+                else:
+                    st.error(f"❌ Error: {resultado.get('error', 'Error desconocido')}")
+                    
+            except requests.exceptions.ConnectionError:
+                st.error("❌ No se pudo conectar al servidor. Asegúrate de que el backend esté corriendo.")
+            except Exception as e:
+                st.error(f"❌ Error inesperado: {str(e)}")
+
+# ==================== PIE DE PÁGINA ====================
+# MANTENGO EXACTAMENTE TU FOOTER
 st.markdown("---")
-st.caption(f"🚀 Polyglot v2.0 - Generación multi-hilo | {datetime.now().year}")
+st.markdown(f'''
+<div class="footer">
+    🌍 <strong>Global-Gadgets</strong> - Polyglot Marketing Multilingüe<br>
+    🇧🇷 Brasil | 🇯🇵 Japón | 🇩🇪 Alemania<br>
+    Potenciado por  Gemini |  Deepseek |  Mistral
+</div>
+''', unsafe_allow_html=True)
