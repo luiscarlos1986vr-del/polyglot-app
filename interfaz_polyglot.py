@@ -1,13 +1,13 @@
-# interfaz_polyglot.py - VERSIÓN DEFINITIVA CON TRADUCCIÓN Y HILOS
+# interfaz_polyglot.py - VERSIÓN CON HILOS (Usa tu endpoint /generar original)
 # Requisito 4: Comparación y selección entre LLMs
-# OPTIMIZACIÓN: Uso hilos para generar contenido en paralelo (3-5 segundos vs 20+ segundos)
+# OPTIMIZACIÓN: Uso hilos para generar contenido en paralelo
 import streamlit as st
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 
 # ==================== CONFIGURACIÓN ====================
-API_URL = "https://polyglot-app-5crh.onrender.com"  # URL de tu API en producción
+API_URL = "https://polyglot-app-5crh.onrender.com"  # Tu URL de producción en Render
 
 st.set_page_config(
     page_title="Global-Gadgets | Polyglot",
@@ -16,7 +16,7 @@ st.set_page_config(
 )
 
 # ==================== ESTILOS CSS PERSONALIZADOS ====================
-# MANTENGO EXACTAMENTE TUS ESTILOS - NO CAMBIO NADA
+# MANTENGO TUS ESTILOS EXACTAMENTE IGUALES
 st.markdown("""
 <style>
     /* Título principal */
@@ -133,7 +133,7 @@ st.markdown("""
         cursor: pointer;
     }
     
-    /* Efecto al pasar el mouse - COLOR MÁS SUAVE */
+    /* Efecto al pasar el mouse */
     div[role="radiogroup"] label:hover {
         background-color: #d8e7f0 !important;
         color: white !important;
@@ -161,13 +161,11 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==================== HEADER CON EMPRESA ====================
-# MANTENGO EXACTAMENTE TU HEADER
 st.markdown('<p class="main-title">🌍 Polyglot</p>', unsafe_allow_html=True)
 st.markdown('<p class="company-name">⚡ Global-Gadgets ⚡</p>', unsafe_allow_html=True)
 st.markdown('<p class="subtitle">Convierte tu producto en ventas globales 🏆<br>Campaña de Marketing para Brasil | Japón | Alemania</p>', unsafe_allow_html=True)
 
 # ==================== ENTRADA DEL PRODUCTO ====================
-# MANTENGO EXACTAMENTE TU INPUT
 with st.container():
     st.markdown('<div class="product-card">', unsafe_allow_html=True)
     st.markdown("### 📦 ¿Qué producto quieres vender al mundo?")
@@ -180,7 +178,6 @@ with st.container():
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ==================== CONFIGURACIÓN EN COLUMNAS ====================
-# MANTENGO EXACTAMENTE TUS SELECTORES
 col1, col2 = st.columns(2)
 
 with col1:
@@ -226,53 +223,61 @@ with col_btn2:
     generar = st.button("✨ Generar campaña internacional ✨", type="primary", use_container_width=True)
 
 
-# ==================== NUEVAS FUNCIONES CON HILOS ====================
-# Yo, Luis Carlos, he añadido estas funciones para procesar en paralelo
-# La interfaz visual sigue EXACTAMENTE IGUAL
+# ==================== NUEVAS FUNCIONES CON HILOS (USANDO TU ENDPOINT /generar) ====================
+# Yo, Luis Carlos, adapté estas funciones para usar tu endpoint /generar original
 
-def llamar_api_para_un_tipo(tipo_contenido, descripcion, mercado, llm):
+def llamar_api_para_tipo(tipo_contenido, descripcion, mercado, llm):
     """
-    Esta función llama a la API para UN SOLO tipo de contenido.
-    La voy a ejecutar en múltiples hilos en paralelo.
+    Llama a tu API /generar para UN SOLO tipo de contenido.
+    Esta función se ejecutará en un hilo separado.
     """
     try:
-        # Construyo el payload según el tipo de contenido
-        if tipo_contenido == "post":
-            endpoint = f"{API_URL}/generar_post"
-            payload = {
-                "descripcion_producto": descripcion,
-                "mercado": mercado,
-                "llm": llm
-            }
-        elif tipo_contenido == "email":
-            endpoint = f"{API_URL}/generar_email"
-            payload = {
-                "descripcion_producto": descripcion,
-                "mercado": mercado,
-                "llm": llm
-            }
-        elif tipo_contenido == "slogan":
-            endpoint = f"{API_URL}/generar_slogan"
-            payload = {
-                "descripcion_producto": descripcion,
-                "mercado": mercado,
-                "llm": llm
-            }
-        else:
-            return None
+        # Construyo el payload EXACTAMENTE como lo espera tu backend
+        payload = {
+            "descripcion_producto": descripcion,
+            "mercado": mercado,
+            "tipo": tipo_contenido,  # "post", "email" o "slogan"
+            "llm": llm
+        }
         
-        # Hago la llamada HTTP con timeout de 25 segundos
-        respuesta = requests.post(endpoint, json=payload, timeout=25)
+        # Llamo a tu endpoint /generar
+        respuesta = requests.post(
+            f"{API_URL}/generar",
+            json=payload,
+            timeout=25
+        )
         
         if respuesta.status_code == 200:
             datos = respuesta.json()
-            return {
-                "tipo": tipo_contenido,
-                "exito": datos.get("exito", False),
-                "respuesta": datos.get("contenido", datos.get("respuesta", "")),
-                "tiempo_ms": datos.get("tiempo_ms", 0),
-                "error": datos.get("error", None)
-            }
+            
+            # Tu backend devuelve algo como: {"exito": true, "contenido": {...}, "tiempo_ms": 123}
+            if datos.get("exito"):
+                # Extraigo el contenido según el tipo
+                contenido = datos.get("contenido", {})
+                
+                # Dependiendo del tipo, la respuesta puede estar en diferentes campos
+                if tipo_contenido == "post":
+                    respuesta_texto = contenido.get("post", "")
+                elif tipo_contenido == "email":
+                    respuesta_texto = contenido.get("email", "")
+                elif tipo_contenido == "slogan":
+                    respuesta_texto = contenido.get("slogan", "")
+                else:
+                    respuesta_texto = str(contenido)
+                
+                return {
+                    "tipo": tipo_contenido,
+                    "exito": True,
+                    "respuesta": respuesta_texto,
+                    "tiempo_ms": datos.get("tiempo_ms", 0),
+                    "raw": datos
+                }
+            else:
+                return {
+                    "tipo": tipo_contenido,
+                    "exito": False,
+                    "error": datos.get("error", "Error desconocido")
+                }
         else:
             return {
                 "tipo": tipo_contenido,
@@ -288,31 +293,21 @@ def llamar_api_para_un_tipo(tipo_contenido, descripcion, mercado, llm):
 
 def generar_contenido_con_hilos(descripcion, mercado, llm):
     """
-    Yo, Luis Carlos, uso hilos para generar los 3 tipos de contenido EN PARALELO.
-    Esto reduce el tiempo de 15-20 segundos a solo 3-5 segundos.
+    Genera los 3 tipos de contenido (post, email, slogan) EN PARALELO usando hilos.
+    Cada tipo se envía a tu endpoint /generar por separado.
     """
-    
-    # Tipos de contenido que voy a generar
     tipos = ["post", "email", "slogan"]
-    
-    # Diccionario donde voy a guardar los resultados
-    resultados = {
-        "exito": True,
-        "contenido": {},
-        "tiempo_total_ms": 0
-    }
-    
+    resultados = {"exito": True, "contenido": {}}
     tiempo_inicio = time.time()
     
-    # Creo un pool de hilos - hasta 3 hilos (uno por cada tipo de contenido)
+    # Creo un pool de hasta 3 hilos (uno por cada tipo de contenido)
     with ThreadPoolExecutor(max_workers=3) as executor:
-        # Envío cada tarea a un hilo diferente
         futuros = {}
         for tipo in tipos:
-            futuro = executor.submit(llamar_api_para_un_tipo, tipo, descripcion, mercado, llm)
+            futuro = executor.submit(llamar_api_para_tipo, tipo, descripcion, mercado, llm)
             futuros[futuro] = tipo
         
-        # Recolecto los resultados a medida que terminan
+        # Recolecto resultados a medida que terminan
         for futuro in as_completed(futuros):
             tipo = futuros[futuro]
             try:
@@ -330,21 +325,16 @@ def generar_contenido_con_hilos(descripcion, mercado, llm):
                     "error": str(e)
                 }
     
-    tiempo_total = (time.time() - tiempo_inicio) * 1000  # Convertir a milisegundos
+    tiempo_total = (time.time() - tiempo_inicio) * 1000
     resultados["tiempo_total_ms"] = int(tiempo_total)
-    
     return resultados
 
 def generar_todos_los_llms_con_hilos(descripcion, mercado):
     """
-    Yo, Luis Carlos, uso hilos para generar contenido con los 3 LLMs EN PARALELO.
-    Esto es para el modo "Todos (Comparar)".
+    Para el modo "Todos (Comparar)": genera contenido con los 3 LLMs EN PARALELO.
+    Cada LLM genera sus 3 tipos de contenido en paralelo también.
     """
-    
-    # Lista de LLMs que voy a ejecutar
     llms = ["gemini", "deepseek", "mistral"]
-    
-    # Diccionario donde voy a guardar los resultados
     resultado_final = {
         "exito": True,
         "contenido": {
@@ -356,38 +346,39 @@ def generar_todos_los_llms_con_hilos(descripcion, mercado):
     
     tiempo_inicio = time.time()
     
-    # Creo un pool de hilos - hasta 3 hilos (uno por cada LLM)
+    # Creo un pool de hasta 3 hilos (uno por cada LLM)
     with ThreadPoolExecutor(max_workers=3) as executor:
         futuros = {}
         for llm_actual in llms:
-            # Para cada LLM, genero los 3 tipos de contenido
             futuro = executor.submit(generar_contenido_con_hilos, descripcion, mercado, llm_actual)
             futuros[futuro] = llm_actual
         
         # Recolecto resultados
         for futuro in as_completed(futuros):
             llm_actual = futuros[futuro]
+            llm_nombre = llm_actual.capitalize()
+            
             try:
                 resultado_llm = futuro.result(timeout=60)
                 
                 # Organizo los resultados por tipo y LLM
                 for tipo, datos in resultado_llm.get("contenido", {}).items():
                     if tipo == "post":
-                        resultado_final["contenido"]["post"][llm_actual.capitalize()] = {
+                        resultado_final["contenido"]["post"][llm_nombre] = {
                             "exito": datos.get("exito", False),
                             "respuesta": datos.get("respuesta", ""),
-                            "traduccion": None,  # La traducción se haría aparte
+                            "traduccion": None,
                             "tiempo_ms": datos.get("tiempo_ms", 0)
                         }
                     elif tipo == "email":
-                        resultado_final["contenido"]["email"][llm_actual.capitalize()] = {
+                        resultado_final["contenido"]["email"][llm_nombre] = {
                             "exito": datos.get("exito", False),
                             "respuesta": datos.get("respuesta", ""),
                             "traduccion": None,
                             "tiempo_ms": datos.get("tiempo_ms", 0)
                         }
                     elif tipo == "slogan":
-                        resultado_final["contenido"]["eslogans"][llm_actual.capitalize()] = {
+                        resultado_final["contenido"]["eslogans"][llm_nombre] = {
                             "exito": datos.get("exito", False),
                             "respuesta": datos.get("respuesta", ""),
                             "traduccion": None,
@@ -397,24 +388,23 @@ def generar_todos_los_llms_con_hilos(descripcion, mercado):
                 # Si un LLM falla, marco error pero continúo con los otros
                 for tipo in ["post", "email", "eslogans"]:
                     if tipo == "eslogans":
-                        resultado_final["contenido"][tipo][llm_actual.capitalize()] = {
+                        resultado_final["contenido"][tipo][llm_nombre] = {
                             "exito": False,
                             "error": str(e)
                         }
                     else:
-                        resultado_final["contenido"][tipo][llm_actual.capitalize()] = {
+                        resultado_final["contenido"][tipo][llm_nombre] = {
                             "exito": False,
                             "error": str(e)
                         }
     
     tiempo_total = (time.time() - tiempo_inicio) * 1000
     resultado_final["tiempo_total_ms"] = int(tiempo_total)
-    
     return resultado_final
 
 
 # ==================== FUNCIONES DE VISUALIZACIÓN ====================
-# MANTENGO EXACTAMENTE TUS FUNCIONES DE VISUALIZACIÓN - NO CAMBIO NADA
+# MANTENGO TUS FUNCIONES EXACTAMENTE IGUALES
 
 def mostrar_comparacion(resultado, mercado_seleccionado_nombre):
     """Muestra los resultados de los 3 LLMs lado a lado para comparar"""
@@ -543,6 +533,7 @@ def mostrar_resultados_normales(resultado, llm_usado_texto):
                         st.markdown("---")
                         st.markdown("**🇪🇸 Traducción al español:**")
                         st.write(datos.get("traduccion"))
+                    st.caption(f"⏱️ {datos.get('tiempo_ms', 0)} ms")
             else:
                 st.warning(f"⚠️ Error: {datos.get('error', 'Error desconocido')}")
         else:
@@ -568,7 +559,7 @@ def mostrar_resultados_normales(resultado, llm_usado_texto):
 
 
 # ==================== LÓGICA PRINCIPAL ====================
-# MODIFICO SOLO LA LÓGICA DE LLAMADA - Ahora usa hilos
+# MODIFICO SOLO LA LÓGICA DE LLAMADA - Ahora usa hilos con tu endpoint /generar
 if generar:
     if not descripcion:
         st.error("❌ Por favor, describe tu producto para empezar")
@@ -580,39 +571,39 @@ if generar:
                 tiempo_inicio_total = time.time()
                 
                 if llm == "todos":
-                    # MODO COMPARACIÓN: Genero con los 3 LLMs EN PARALELO usando hilos
+                    # MODO COMPARACIÓN: Genero con los 3 LLMs EN PARALELO
                     resultado = generar_todos_los_llms_con_hilos(descripcion, mercado)
                 else:
-                    # MODO NORMAL: Genero los 3 tipos de contenido EN PARALELO usando hilos
+                    # MODO NORMAL: Genero los 3 tipos de contenido EN PARALELO
                     resultado = generar_contenido_con_hilos(descripcion, mercado, llm)
                 
                 tiempo_total = time.time() - tiempo_inicio_total
                 
-                if resultado.get("exito"):
-                    # Verifico si hay al menos algún contenido generado
-                    tiene_contenido = False
-                    if llm == "todos":
-                        for tipo in ["post", "email", "eslogans"]:
-                            if resultado["contenido"].get(tipo):
-                                tiene_contenido = True
-                                break
-                    else:
-                        for tipo in ["post", "email", "slogan"]:
-                            if resultado["contenido"].get(tipo, {}).get("exito"):
-                                tiene_contenido = True
-                                break
-                    
-                    if tiene_contenido:
-                        st.success(f"✅ ¡Campaña generada exitosamente para {mercado_nombre_para_mostrar} en {tiempo_total:.1f} segundos!")
-                        
-                        if llm == "todos":
-                            mostrar_comparacion(resultado, mercado_nombre_para_mostrar)
-                        else:
-                            mostrar_resultados_normales(resultado, llm_seleccionado)
-                    else:
-                        st.error("❌ No se pudo generar ningún contenido. Verifica las API keys.")
+                # Verifico si hay al menos algún contenido generado
+                tiene_contenido = False
+                if llm == "todos":
+                    for tipo in ["post", "email", "eslogans"]:
+                        if resultado["contenido"].get(tipo):
+                            # Verifico si algún LLM tuvo éxito
+                            for llm_key in resultado["contenido"][tipo]:
+                                if resultado["contenido"][tipo].get(llm_key, {}).get("exito"):
+                                    tiene_contenido = True
+                                    break
                 else:
-                    st.error(f"❌ Error: {resultado.get('error', 'Error desconocido')}")
+                    for tipo in ["post", "email", "slogan"]:
+                        if resultado["contenido"].get(tipo, {}).get("exito"):
+                            tiene_contenido = True
+                            break
+                
+                if tiene_contenido:
+                    st.success(f"✅ ¡Campaña generada exitosamente para {mercado_nombre_para_mostrar} en {tiempo_total:.1f} segundos!")
+                    
+                    if llm == "todos":
+                        mostrar_comparacion(resultado, mercado_nombre_para_mostrar)
+                    else:
+                        mostrar_resultados_normales(resultado, llm_seleccionado)
+                else:
+                    st.error("❌ No se pudo generar ningún contenido. Verifica las API keys y que el backend esté funcionando.")
                     
             except requests.exceptions.ConnectionError:
                 st.error("❌ No se pudo conectar al servidor. Asegúrate de que el backend esté corriendo.")
@@ -620,7 +611,6 @@ if generar:
                 st.error(f"❌ Error inesperado: {str(e)}")
 
 # ==================== PIE DE PÁGINA ====================
-# MANTENGO EXACTAMENTE TU FOOTER
 st.markdown("---")
 st.markdown(f'''
 <div class="footer">
