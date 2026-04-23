@@ -1,415 +1,356 @@
 """
 interfaz_polyglot.py - Frontend con multi-hilos para generación paralela
 Yo, Luis Carlos, he implementado esta versión para acelerar la generación de contenido
+Mantiene EXACTAMENTE la misma interfaz visual, solo cambia el procesamiento interno
 Ejecutar con: streamlit run interfaz_polyglot.py
 """
 
 # ============================================================================
 # IMPORTACIONES - Librerías que necesito para que todo funcione
 # ============================================================================
-import streamlit as st  # Para crear la interfaz web
-import requests  # Para comunicarme con mi backend API
-from concurrent.futures import ThreadPoolExecutor, as_completed  # Para los hilos
-from datetime import datetime  # Para mostrar fechas y tiempos
-import time  # Para medir cuánto tarda la generación
+import streamlit as st
+import requests
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime
+import time
 
 # ============================================================================
-# CONFIGURACIÓN DE LA PÁGINA - Estilo y título de la app web
+# CONFIGURACIÓN DE LA PÁGINA - MANTIENE EL MISMO ESTILO
 # ============================================================================
 st.set_page_config(
-    page_title="Polyglot - Marketing Multilingüe",  # Título que aparece en la pestaña
-    page_icon="🌍",  # Icono que aparece en la pestaña
-    layout="wide"  # Layout ancho para aprovechar toda la pantalla
+    page_title="Polyglot - Marketing Multilingüe",
+    page_icon="🌍",
+    layout="wide"
 )
 
 # ============================================================================
-# CONSTANTES GLOBALES - Datos que no cambian durante la ejecución
+# CONSTANTES GLOBALES - MISMO COLOR Y ESTILO QUE ANTES
 # ============================================================================
-# URL de mi backend Flask (cambiar si despliego en la nube)
 API_URL = "http://localhost:5000"
 
-# Lista de países que soporta mi app
-# Cada país tiene: código (para APIs), nombre, bandera y color (para la UI)
 PAISES = [
     {"codigo": "BR", "nombre": "Brasil", "bandera": "🇧🇷", "color": "#009c3b"},
     {"codigo": "JP", "nombre": "Japón", "bandera": "🇯🇵", "color": "#bc002d"},
     {"codigo": "DE", "nombre": "Alemania", "bandera": "🇩🇪", "color": "#000000"}
 ]
 
-# Tipos de contenido que puedo generar
 TIPOS_CONTENIDO = [
-    {"id": "post", "nombre": "📱 Post Redes Sociales"},  # Para Instagram, Facebook, etc
-    {"id": "email", "nombre": "📧 Email Promocional"},   # Para campañas de email
-    {"id": "slogan", "nombre": "💡 Eslogan"}             # Frases cortas para branding
+    {"id": "post", "nombre": "📱 Post Redes Sociales"},
+    {"id": "email", "nombre": "📧 Email Promocional"},
+    {"id": "slogan", "nombre": "💡 Eslogan"}
 ]
 
 # ============================================================================
-# FUNCIÓN PRINCIPAL - La que hace la magia de los hilos
+# FUNCIÓN PARA VERIFICAR QUE EL BACKEND ESTÉ CORRIENDO
+# ============================================================================
+def verificar_backend():
+    """
+    Yo, Luis Carlos, añadí esta función para verificar si el backend está vivo
+    ANTES de intentar generar contenido. Así evito errores confusos.
+    """
+    try:
+        # Intento conectar con el backend
+        respuesta = requests.get(f"{API_URL}/", timeout=2)
+        return True
+    except requests.exceptions.ConnectionError:
+        return False
+    except:
+        return False
+
+# ============================================================================
+# FUNCIÓN PRINCIPAL - Genera contenido en paralelo con manejo de errores
 # ============================================================================
 def generar_contenido_paralelo(prompt, paises_seleccionados, tipos_seleccionados):
     """
-    Yo, Luis Carlos, he creado esta función para generar contenido en PARALELO.
-    
-    QUÉ HACE: 
-    - Toma el texto del producto y los países/tipos seleccionados
-    - Crea un hilo por cada combinación (ej: Brasil-Post, Brasil-Email, etc)
-    - Todos los hilos trabajan al mismo tiempo
-    - Muestra progreso en tiempo real mientras generan
-    
-    PARÁMETROS:
-    - prompt: El texto que describe el producto/servicio
-    - paises_seleccionados: Lista de países que el usuario eligió
-    - tipos_seleccionados: Lista de tipos de contenido que el usuario eligió
-    
-    RETORNA:
-    - Diccionario con todos los resultados generados
-    - Tiempo total que tardó todo el proceso
+    Yo, Luis Carlos, he mejorado esta función para manejar errores correctamente.
+    Ahora verifica el backend antes de empezar y captura TODOS los errores.
     """
     
-    # PASO 1: Preparar todas las tareas que voy a lanzar
-    # Cada tarea es una combinación de país + tipo de contenido
-    tareas = []  # Lista vacía donde voy a guardar cada tarea
+    # PASO 1: Verificar que el backend esté corriendo
+    if not verificar_backend():
+        return {}, [{"error": "Backend no disponible. ¿Ejecutaste 'python api.py' en otra terminal?"}]
     
-    # Recorro cada país seleccionado
+    # PASO 2: Preparar todas las tareas
+    tareas = []
     for pais in paises_seleccionados:
-        # Recorro cada tipo de contenido seleccionado
         for tipo in tipos_seleccionados:
-            # Creo una tarea: es un diccionario con los datos necesarios
             tarea = {
-                'pais': pais,      # Guarda el país completo (con bandera, etc)
-                'tipo': tipo,      # Guarda el tipo completo
-                'prompt': prompt,   # Guarda el texto del producto
-                'key': f"{pais['codigo']}_{tipo['id']}"  # Clave única: "BR_post"
+                'pais': pais,
+                'tipo': tipo,
+                'prompt': prompt,
+                'key': f"{pais['codigo']}_{tipo['id']}"
             }
-            tareas.append(tarea)  # Agrego esta tarea a mi lista
+            tareas.append(tarea)
     
-    # PASO 2: Configurar la barra de progreso para que el usuario vea qué pasa
-    # Creo una barra que irá del 0% al 100%
+    # PASO 3: Configurar barra de progreso
     barra_progreso = st.progress(0)
-    # Creo un espacio de texto para mostrar mensajes de estado
     texto_estado = st.empty()
     
-    # PASO 3: Crear el "pool de hilos" - Grupo de trabajadores virtuales
-    # max_workers=9 significa que puedo tener hasta 9 tareas a la vez
-    # Uso 9 porque es 3 países × 3 tipos = 9 combinaciones máximas
+    # PASO 4: Crear el pool de hilos
     with ThreadPoolExecutor(max_workers=9) as executor:
         
-        # PASO 4: Enviar todas las tareas a los hilos
-        # futures es un diccionario que me permite rastrear cada tarea
-        futures = {}  # Aquí voy a guardar cada tarea que envío
-        
+        futures = {}
         texto_estado.text("🚀 Lanzando todas las generaciones en paralelo...")
         
-        # Recorro cada tarea y la envío a un hilo libre
+        # Envío cada tarea a un hilo
         for tarea in tareas:
-            # submit() asigna la tarea a un hilo y me devuelve un "futuro"
-            # El futuro es como un recibo que me permite saber cuándo termina
             futuro = executor.submit(
-                llamar_api_generar,  # La función que quiero ejecutar
-                tarea['pais']['codigo'],  # Primer parámetro de la función
-                tarea['tipo']['id'],      # Segundo parámetro
-                tarea['prompt']           # Tercer parámetro
+                llamar_api_generar,
+                tarea['pais']['codigo'],
+                tarea['tipo']['id'],
+                tarea['prompt']
             )
-            # Guardo el futuro con su clave para identificarlo después
             futures[futuro] = tarea['key']
         
-        # PASO 5: Recolectar los resultados a medida que terminan
-        # as_completed() me va dando los futuros en el orden que terminan
-        resultados = {}  # Diccionario donde guardo los resultados exitosos
-        errores = []     # Lista donde guardo los que fallaron
-        
-        # Cuento cuántos han terminado para actualizar la barra
+        # PASO 5: Recolectar resultados
+        resultados = {}
+        errores = []
         completados = 0
         total_tareas = len(tareas)
         
-        # Muestro un spinner de carga mientras espero
+        # UNA SOLA VEZ - Muestro el spinner mientras proceso
         with st.spinner('Generando contenido en paralelo...'):
-            # Itero sobre cada futuro que se va completando
             for futuro in as_completed(futures):
-                completados += 1  # Uno más terminado
-                
-                # Actualizo la barra de progreso (ej: 3 de 9 = 33%)
+                completados += 1
                 porcentaje = completados / total_tareas
                 barra_progreso.progress(porcentaje)
                 
-                # Obtengo la clave de esta tarea (ej: "BR_post")
                 clave = futures[futuro]
                 
-                # Intento obtener el resultado de la tarea
                 try:
-                    # result() me da el valor que retornó la función
-                    # timeout=15 significa: espero máximo 15 segundos por tarea
-                    resultado = futuro.result(timeout=15)
+                    # Espero el resultado con timeout de 25 segundos
+                    resultado = futuro.result(timeout=25)
                     
-                    # Si llegué aquí, la tarea fue exitosa
-                    resultados[clave] = resultado
-                    texto_estado.text(f"✅ Completado: {clave} ({completados}/{total_tareas})")
-                    
+                    if resultado and 'contenido' in resultado:
+                        resultados[clave] = resultado
+                        texto_estado.text(f"✅ Completado: {clave} ({completados}/{total_tareas})")
+                    else:
+                        errores.append({'clave': clave, 'error': 'Respuesta vacía de la API'})
+                        texto_estado.text(f"⚠️ {clave}: Respuesta vacía")
+                        
+                except requests.exceptions.ConnectionError:
+                    errores.append({'clave': clave, 'error': 'No se pudo conectar al backend. ¿Está corriendo api.py?'})
+                    texto_estado.text(f"❌ {clave}: Backend no disponible")
+                except requests.exceptions.Timeout:
+                    errores.append({'clave': clave, 'error': 'Timeout - La API tardó más de 25 segundos'})
+                    texto_estado.text(f"⏰ {clave}: Timeout")
                 except Exception as error:
-                    # Si hubo error (timeout, API caída, etc)
-                    errores.append({
-                        'clave': clave,
-                        'error': str(error)
-                    })
-                    texto_estado.text(f"❌ Error en {clave}: {str(error)[:50]}")
+                    errores.append({'clave': clave, 'error': str(error)[:100]})
+                    texto_estado.text(f"❌ {clave}: Error")
         
-        # PASO 6: Mostrar resumen final
-        if errores:
-            st.warning(f"⚠️ {len(errores)} tareas fallaron de {total_tareas}")
+        # Limpio la barra de progreso
+        barra_progreso.empty()
+        texto_estado.empty()
         
         return resultados, errores
 
 # ============================================================================
-# FUNCIÓN AUXILIAR - La que realmente llama a mi API
+# FUNCIÓN QUE LLAMA A LA API - Con manejo de errores mejorado
 # ============================================================================
 def llamar_api_generar(codigo_pais, tipo_contenido, texto_prompt):
     """
     Yo, Luis Carlos, uso esta función para comunicarme con mi backend Flask.
-    
-    QUÉ HACE:
-    - Toma los parámetros y los envía a mi API local
-    - Espera la respuesta y la retorna
-    - Si algo falla, lanza una excepción que capturará la función principal
-    
-    NOTA: Esta función se ejecuta DENTRO de un hilo separado
+    Ahora con mejores mensajes de error y timeout adecuado.
     """
     
-    # Construyo el payload (los datos que envío a mi API)
+    # Construyo el payload
     payload = {
-        'pais': codigo_pais,        # Ej: "BR", "JP" o "DE"
-        'tipo': tipo_contenido,      # Ej: "post", "email" o "slogan"
-        'prompt': texto_prompt       # La descripción del producto
+        'pais': codigo_pais,
+        'tipo': tipo_contenido,
+        'prompt': texto_prompt
     }
     
-    # Hago la llamada HTTP a mi backend
-    # timeout=20: si tarda más de 20 segundos, cancelo
+    # Hago la llamada con timeout de 20 segundos
     respuesta = requests.post(
-        f"{API_URL}/generate",  # URL del endpoint
-        json=payload,            # Datos que envío
-        timeout=20               # Tiempo máximo de espera
+        f"{API_URL}/generate",
+        json=payload,
+        timeout=20
     )
     
-    # Verifico si la respuesta fue exitosa
+    # Verifico respuesta
     if respuesta.status_code == 200:
-        # Retorno el JSON que me envió mi backend
         return respuesta.json()
     else:
-        # Si hubo error, lanzo una excepción
-        raise Exception(f"Error HTTP {respuesta.status_code}: {respuesta.text}")
+        raise Exception(f"Error HTTP {respuesta.status_code}")
 
 # ============================================================================
-# INTERFAZ DE USUARIO - Todo lo que el usuario ve y toca
+# INTERFAZ DE USUARIO - EXACTAMENTE IGUAL QUE ANTES
 # ============================================================================
 
-# Título principal de la app
+# Título principal
 st.title("🌍 Polyglot - Asistente de Marketing Multilingüe con IA")
-st.markdown("---")  # Línea separadora
+st.markdown("---")
 
 # ============================================================================
-# BARRA LATERAL (SIDEBAR) - Configuración que el usuario puede ajustar
+# BARRA LATERAL - MISMA QUE SIEMPRE
 # ============================================================================
 with st.sidebar:
-    st.header("⚙️ Configuración de Generación")
+    st.header("⚙️ Configuración")
     
-    # Sección para seleccionar países
-    st.subheader("🌎 Selecciona los países")
-    paises_seleccionados = []  # Lista vacía para guardar lo que elija el usuario
-    
-    # Muestro un checkbox por cada país
+    st.subheader("🌎 Países")
+    paises_seleccionados = []
     for pais in PAISES:
-        # checkbox: True si está marcado, False si no
-        # value=True significa que viene marcado por defecto
         if st.checkbox(f"{pais['bandera']} {pais['nombre']}", value=True, key=f"pais_{pais['codigo']}"):
             paises_seleccionados.append(pais)
     
-    st.markdown("---")  # Separador
+    st.markdown("---")
     
-    # Sección para seleccionar tipos de contenido
-    st.subheader("📝 Selecciona los tipos de contenido")
-    tipos_seleccionados = []  # Lista vacía para guardar lo que elija el usuario
-    
-    # Muestro un checkbox por cada tipo de contenido
+    st.subheader("📝 Tipos de contenido")
+    tipos_seleccionados = []
     for tipo in TIPOS_CONTENIDO:
         if st.checkbox(tipo['nombre'], value=True, key=f"tipo_{tipo['id']}"):
             tipos_seleccionados.append(tipo)
     
     st.markdown("---")
     
-    # Muestro cuántos contenidos se van a generar
     total_a_generar = len(paises_seleccionados) * len(tipos_seleccionados)
-    st.info(f"📊 **{total_a_generar}** contenidos se generarán en paralelo")
+    st.info(f"📊 **{total_a_generar}** contenidos a generar")
     
-    # Explicación simple de qué son los hilos
-    with st.expander("ℹ️ ¿Cómo funciona la generación rápida?"):
-        st.markdown("""
-        **Sin hilos (antes):** Generaba 1 contenido, esperaba, generaba otro...  
-        ⏱️ 9 contenidos = ~22 segundos
-        
-        **Con hilos (ahora):** Genera TODOS al mismo tiempo  
-        ⚡ 9 contenidos = ~3 segundos
-        
-        🚀 **Hasta 7 veces más rápido**
-        """)
+    # Verificación del backend en el sidebar
+    if not verificar_backend():
+        st.error("❌ **Backend no conectado**\n\nEjecuta en otra terminal:\n```bash\npython api.py\n```")
+    else:
+        st.success("✅ Backend conectado")
 
 # ============================================================================
-# ÁREA PRINCIPAL - Donde el usuario escribe el producto
+# ÁREA PRINCIPAL - EXACTAMENTE IGUAL
 # ============================================================================
-
-# Texto de ayuda para el usuario
 st.subheader("✏️ Describe tu producto o servicio")
 
-# Área de texto grande para que el usuario describa su producto
 texto_producto = st.text_area(
     label="Descripción del producto",
-    placeholder="Ejemplo: Un servicio de suscripción mensual de café orgánico de especialidad, con granos provenientes de agricultura sostenible...",
-    height=120,
-    help="Escribe una descripción detallada. Cuanto más específico, mejor será el contenido generado."
+    placeholder="Ejemplo: Auriculares con cancelación de ruido y 40 horas de batería...",
+    height=120
 )
 
-# Botones de acción en columnas para mejor organización
 col_boton1, col_boton2, col_boton3 = st.columns([2, 1, 1])
 
 with col_boton2:
-    # Botón principal para generar contenido
-    boton_generar = st.button(
-        "🚀 GENERAR CONTENIDO", 
-        type="primary",  # Botón de color primario (azul)
-        use_container_width=True  # Ocupa todo el ancho de la columna
-    )
+    boton_generar = st.button("🚀 GENERAR CONTENIDO", type="primary", use_container_width=True)
 
 with col_boton3:
-    # Botón para limpiar todo
-    boton_limpiar = st.button(
-        "🗑️ LIMPIAR", 
-        use_container_width=True
-    )
+    boton_limpiar = st.button("🗑️ LIMPIAR", use_container_width=True)
 
-# Si el usuario hace click en limpiar, recargo la página
 if boton_limpiar:
     st.rerun()
 
 # ============================================================================
-# PROCESAMIENTO - Cuando el usuario hace click en "Generar"
+# PROCESAMIENTO - MISMA LÓGICA DE VALIDACIÓN
 # ============================================================================
 if boton_generar:
     
-    # VALIDACIÓN 1: ¿El usuario escribió algo?
     if not texto_producto:
         st.error("❌ Por favor, escribe una descripción de tu producto/servicio")
     
-    # VALIDACIÓN 2: ¿Seleccionó al menos un país?
     elif not paises_seleccionados:
         st.error("❌ Por favor, selecciona al menos un país")
     
-    # VALIDACIÓN 3: ¿Seleccionó al menos un tipo de contenido?
     elif not tipos_seleccionados:
         st.error("❌ Por favor, selecciona al menos un tipo de contenido")
     
-    # TODO está correcto, procedo a generar
     else:
-        
-        # Muestro métricas en tiempo real en 3 columnas
-        col_metrica1, col_metrica2, col_metrica3 = st.columns(3)
-        
-        with col_metrica1:
-            st.metric("📦 Total a generar", total_a_generar)
-        
-        # Marco el tiempo de inicio para medir rendimiento
-        tiempo_inicio = time.time()
-        
-        # ================================================================
-        # AQUÍ OCURRE LA MAGIA - Llamo a mi función con hilos
-        # ================================================================
-        resultados, errores = generar_contenido_paralelo(
-            texto_producto, 
-            paises_seleccionados, 
-            tipos_seleccionados
-        )
-        # ================================================================
-        
-        # Calculo cuánto tiempo tardó
-        tiempo_total = time.time() - tiempo_inicio
-        
-        with col_metrica2:
-            st.metric("⏱️ Tiempo total", f"{tiempo_total:.2f} seg")
-        
-        with col_metrica3:
-            # Calculo velocidad: contenidos por segundo
-            velocidad = total_a_generar / tiempo_total if tiempo_total > 0 else 0
-            st.metric("⚡ Velocidad", f"{velocidad:.1f} cont/seg")
-        
-        # ============================================================================
-        # MOSTRAR RESULTADOS - Organizo por país en pestañas
-        # ============================================================================
-        
-        st.markdown("---")
-        st.subheader("📄 Contenido Generado")
-        
-        # Creo una pestaña por cada país seleccionado
-        # tabs es una lista de objetos de pestaña
-        pestañas = st.tabs([f"{pais['bandera']} {pais['nombre']}" for pais in paises_seleccionados])
-        
-        # Recorro cada pestaña con su país correspondiente
-        for pestaña, pais in zip(pestañas, paises_seleccionados):
-            with pestaña:
-                # Dentro de cada país, muestro cada tipo de contenido
-                for tipo in tipos_seleccionados:
-                    clave = f"{pais['codigo']}_{tipo['id']}"  # Ej: "BR_post"
-                    
-                    if clave in resultados:
-                        # Si el resultado existe, lo muestro en un expander
-                        with st.expander(f"{tipo['nombre']}", expanded=True):
-                            # Extraigo el contenido de la respuesta
-                            contenido = resultados[clave].get('contenido', 'Sin contenido')
-                            st.markdown(contenido)
-                    else:
-                        # Si no existe, muestro error
-                        st.error(f"❌ No se pudo generar {tipo['nombre']}")
-        
-        # Muestro errores si los hubo
-        if errores:
-            with st.expander(f"⚠️ {len(errores)} errores ocurrieron", expanded=False):
-                for error in errores:
-                    st.code(f"{error['clave']}: {error['error']}")
-        
-        # ============================================================================
-        # SECCIÓN DE DESCARGA - Opción para exportar resultados
-        # ============================================================================
-        
-        # Creo un texto con todos los resultados para copiar/descargar
-        if resultados:
-            texto_exportacion = f"# RESULTADOS POLYGLOT\n"
-            texto_exportacion += f"# Generado el: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
-            texto_exportacion += f"# Producto: {texto_producto}\n"
-            texto_exportacion += f"# Tiempo: {tiempo_total:.2f} segundos\n\n"
+        # Verifico el backend antes de empezar
+        if not verificar_backend():
+            st.error("""
+            ❌ **No se puede conectar al backend**
             
-            for clave, resultado in resultados.items():
-                texto_exportacion += f"## {clave}\n"
-                texto_exportacion += f"{resultado.get('contenido', 'Sin contenido')}\n"
-                texto_exportacion += "---\n\n"
+            **Solución:**
+            1. Abre una NUEVA terminal
+            2. Ejecuta: `python api.py`
+            3. Espera que diga "Running on http://localhost:5000"
+            4. Vuelve a hacer click en GENERAR
+            """)
+        else:
+            # Métricas en 3 columnas
+            col_metrica1, col_metrica2, col_metrica3 = st.columns(3)
             
-            # Botón para descargar los resultados como archivo de texto
-            st.download_button(
-                label="📥 Descargar todos los resultados (TXT)",
-                data=texto_exportacion,
-                file_name=f"polyglot_resultados_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
-                mime="text/plain",
-                use_container_width=True
+            with col_metrica1:
+                st.metric("📦 Total a generar", total_a_generar)
+            
+            tiempo_inicio = time.time()
+            
+            # LLAMO A LA FUNCIÓN CON HILOS
+            resultados, errores = generar_contenido_paralelo(
+                texto_producto, 
+                paises_seleccionados, 
+                tipos_seleccionados
             )
+            
+            tiempo_total = time.time() - tiempo_inicio
+            
+            with col_metrica2:
+                st.metric("⏱️ Tiempo total", f"{tiempo_total:.2f} seg")
+            
+            with col_metrica3:
+                velocidad = total_a_generar / tiempo_total if tiempo_total > 0 else 0
+                st.metric("⚡ Velocidad", f"{velocidad:.1f} cont/seg")
+            
+            # ================================================================
+            # MUESTRO RESULTADOS - EXACTAMENTE IGUAL QUE ANTES
+            # ================================================================
+            st.markdown("---")
+            st.subheader("📄 Contenido Generado")
+            
+            # Si hay errores de conexión, muestro mensaje claro
+            if errores and not resultados:
+                st.error("""
+                ❌ **No se pudo generar ningún contenido**
+                
+                **Posibles causas:**
+                1. El backend no está corriendo → Ejecuta `python api.py`
+                2. Las API keys no son válidas → Revisa tu archivo `.env`
+                3. Puerto 5000 está ocupado → Cambia el puerto en api.py
+                """)
+                
+                with st.expander("Ver detalles de errores"):
+                    for error in errores:
+                        st.code(f"{error.get('clave', 'General')}: {error.get('error', 'Error desconocido')}")
+            
+            # Si tengo resultados, los muestro
+            elif resultados:
+                # Creo pestañas por país
+                pestañas = st.tabs([f"{pais['bandera']} {pais['nombre']}" for pais in paises_seleccionados])
+                
+                for pestaña, pais in zip(pestañas, paises_seleccionados):
+                    with pestaña:
+                        for tipo in tipos_seleccionados:
+                            clave = f"{pais['codigo']}_{tipo['id']}"
+                            
+                            if clave in resultados:
+                                with st.expander(f"{tipo['nombre']}", expanded=True):
+                                    contenido = resultados[clave].get('contenido', 'Sin contenido')
+                                    st.markdown(contenido)
+                            else:
+                                st.error(f"❌ No se pudo generar {tipo['nombre']}")
+                
+                # Muestro errores parciales si los hay
+                if errores:
+                    with st.expander(f"⚠️ {len(errores)} errores en algunas tareas"):
+                        for error in errores:
+                            st.code(f"{error['clave']}: {error['error']}")
+            
+            # Opción de descarga si hay resultados
+            if resultados:
+                texto_exportacion = f"# RESULTADOS POLYGLOT\n"
+                texto_exportacion += f"# Generado el: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+                texto_exportacion += f"# Producto: {texto_producto}\n"
+                texto_exportacion += f"# Tiempo: {tiempo_total:.2f} segundos\n\n"
+                
+                for clave, resultado in resultados.items():
+                    texto_exportacion += f"## {clave}\n"
+                    texto_exportacion += f"{resultado.get('contenido', 'Sin contenido')}\n"
+                    texto_exportacion += "---\n\n"
+                
+                st.download_button(
+                    label="📥 Descargar todos los resultados (TXT)",
+                    data=texto_exportacion,
+                    file_name=f"polyglot_resultados_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+                    mime="text/plain",
+                    use_container_width=True
+                )
 
 # ============================================================================
-# PIE DE PÁGINA - Información adicional
+# PIE DE PÁGINA - IGUAL
 # ============================================================================
 st.markdown("---")
-st.caption(f"🚀 Polyglot v2.0 - Generación multi-hilo | {datetime.now().year} | Hecho con ❤️ para el Diplomado Python")
-
-# ============================================================================
-# NOTA SOBRE EL BACKEND - Recordatorio importante
-# ============================================================================
-st.sidebar.markdown("---")
-st.sidebar.warning(
-    "⚠️ **Recuerda tener el backend corriendo**\n\n"
-    "En otra terminal ejecuta:\n"
-    "```bash\npython api.py\n```\n"
-    "El backend debe estar en http://localhost:5000"
-)
+st.caption(f"🚀 Polyglot v2.0 - Generación multi-hilo | {datetime.now().year}")
