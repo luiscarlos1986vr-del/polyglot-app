@@ -1,12 +1,12 @@
-# interfaz_polyglot.py - VERSIÓN CORREGIDA CON DEPURACIÓN
+# interfaz_polyglot.py - VERSIÓN WEB CON HILOS
 import streamlit as st
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
-import json
 
 # ==================== CONFIGURACIÓN ====================
-API_URL = "https://polyglot-app-5crh.onrender.com"
+# IMPORTANTE: Esta URL debe ser la de tu backend en RENDER
+API_URL = "https://polyglot-app-5crh.onrender.com"  # ← TU URL DE RENDER
 
 st.set_page_config(
     page_title="Global-Gadgets | Polyglot",
@@ -131,10 +131,10 @@ with col_btn2:
     generar = st.button("✨ Generar campaña internacional ✨", type="primary", use_container_width=True)
 
 
-# ==================== FUNCIONES PRINCIPALES ====================
+# ==================== FUNCIONES CON HILOS ====================
 
 def llamar_api(descripcion, mercado, llm_usar):
-    """Llama a tu API y devuelve el resultado crudo"""
+    """Llama a tu API en Render"""
     try:
         payload = {
             "descripcion_producto": descripcion,
@@ -143,8 +143,6 @@ def llamar_api(descripcion, mercado, llm_usar):
             "idioma_entrada": "es"
         }
         
-        st.write(f"📤 Enviando a {llm_usar}...")  # Debug
-        
         respuesta = requests.post(
             f"{API_URL}/generar",
             json=payload,
@@ -152,14 +150,10 @@ def llamar_api(descripcion, mercado, llm_usar):
         )
         
         if respuesta.status_code == 200:
-            datos = respuesta.json()
-            st.write(f"✅ {llm_usar} respondió OK")  # Debug
-            return datos
+            return respuesta.json()
         else:
-            st.write(f"❌ {llm_usar} error HTTP {respuesta.status_code}")
             return {"exito": False, "error": f"HTTP {respuesta.status_code}"}
     except Exception as e:
-        st.write(f"❌ {llm_usar} excepción: {str(e)[:50]}")
         return {"exito": False, "error": str(e)}
 
 def generar_con_todos(descripcion, mercado):
@@ -167,7 +161,6 @@ def generar_con_todos(descripcion, mercado):
     llms = ["gemini", "deepseek", "mistral"]
     resultados = {}
     
-    # Barra de progreso
     progress_bar = st.progress(0)
     status_text = st.empty()
     
@@ -188,26 +181,18 @@ def generar_con_todos(descripcion, mercado):
             
             completados += 1
             progress_bar.progress(completados / len(llms))
-            status_text.text(f"Completado {completados}/{len(llms)}: {llm_actual}")
+            status_text.text(f"✅ {llm_actual.capitalize()} listo ({completados}/{len(llms)})")
     
     progress_bar.empty()
     status_text.empty()
     return resultados
 
-def extraer_y_mostrar_resultados(resultados_por_llm):
-    """Toma los resultados crudos y los muestra en formato comparativo"""
-    
+def mostrar_comparacion(resultados_por_llm):
+    """Muestra resultados de los 3 LLMs"""
     st.markdown("---")
     st.markdown("## 🏆 Comparación de Motores de IA")
     
-    # Obtener los nombres de los LLMs que tienen datos
     llms_presentes = list(resultados_por_llm.keys())
-    
-    if not llms_presentes:
-        st.error("No hay resultados para mostrar")
-        return
-    
-    # Crear columnas dinámicamente
     cols = st.columns(len(llms_presentes))
     
     for idx, llm_nombre in enumerate(llms_presentes):
@@ -215,69 +200,59 @@ def extraer_y_mostrar_resultados(resultados_por_llm):
             resultado_llm = resultados_por_llm[llm_nombre]
             
             if resultado_llm.get("exito"):
-                # Mostrar tarjeta del LLM
                 st.markdown(f"""
                 <div style="background:#d8e7f0; border-radius:16px; padding:1rem; border-left:4px solid #FFD700; margin-bottom:1rem;">
                     <div style="text-align:center; font-size:1.2rem; font-weight:600;">{llm_nombre.capitalize()}</div>
                 </div>
                 """, unsafe_allow_html=True)
                 
-                # Extraer contenido
                 contenido = resultado_llm.get("contenido", {})
                 
-                # Mostrar POST
+                # Post
                 st.markdown("#### 📱 Post")
                 post_data = contenido.get("post", {})
                 if post_data.get("exito"):
                     with st.expander("Ver Post", expanded=True):
-                        st.markdown("**🌐 Original:**")
-                        st.write(post_data.get("respuesta", "No hay texto"))
+                        st.write(post_data.get("respuesta", ""))
                         if post_data.get("traduccion"):
+                            st.markdown("---")
                             st.markdown("**🇪🇸 Traducción:**")
                             st.write(post_data.get("traduccion"))
                         st.caption(f"⏱️ {post_data.get('tiempo_ms', 0)} ms")
                 else:
-                    st.warning(f"Error en Post: {post_data.get('error', 'Desconocido')}")
+                    st.warning("Error en Post")
                 
-                # Mostrar EMAIL
+                # Email
                 st.markdown("#### 📧 Email")
                 email_data = contenido.get("email", {})
                 if email_data.get("exito"):
                     with st.expander("Ver Email", expanded=True):
-                        st.write(email_data.get("respuesta", "No hay texto"))
+                        st.write(email_data.get("respuesta", ""))
                 else:
-                    st.warning(f"Error en Email: {email_data.get('error', 'Desconocido')}")
+                    st.warning("Error en Email")
                 
-                # Mostrar ESLÓGANES
+                # Eslogans
                 st.markdown("#### 💡 Eslogans")
                 eslogans_data = contenido.get("eslogans", {})
                 if eslogans_data.get("exito"):
                     with st.expander("Ver Eslogans", expanded=True):
-                        st.write(eslogans_data.get("respuesta", "No hay texto"))
+                        st.write(eslogans_data.get("respuesta", ""))
                 else:
-                    st.warning(f"Error en Eslogans: {eslogans_data.get('error', 'Desconocido')}")
-                
+                    st.warning("Error en Eslogans")
             else:
-                st.error(f"❌ {llm_nombre.capitalize()} falló:\n{resultado_llm.get('error', 'Error desconocido')}")
+                st.error(f"❌ {llm_nombre.capitalize()} falló")
 
-def generar_un_solo_llm(descripcion, mercado, llm):
-    """Genera con un solo LLM y muestra resultados"""
-    
-    with st.spinner(f"Generando con {llm}..."):
-        resultado = llamar_api(descripcion, mercado, llm)
-    
+def mostrar_un_llm(resultado, llm_nombre):
+    """Muestra resultados de un solo LLM"""
     if resultado.get("exito"):
-        st.success(f"✅ ¡Contenido generado exitosamente!")
+        st.success(f"✅ ¡Contenido generado con {llm_nombre}!")
         
         contenido = resultado.get("contenido", {})
-        
-        # Pestañas para organizar
         tab1, tab2, tab3 = st.tabs(["📱 Post", "📧 Email", "💡 Eslogans"])
         
         with tab1:
             post_data = contenido.get("post", {})
             if post_data.get("exito"):
-                st.markdown("**🌐 Original:**")
                 st.write(post_data.get("respuesta", ""))
                 if post_data.get("traduccion"):
                     st.markdown("---")
@@ -311,21 +286,19 @@ if generar:
     else:
         mercado_nombre = mercado_seleccionado.replace("🇧🇷 ", "").replace("🇯🇵 ", "").replace("🇩🇪 ", "")
         
-        st.info(f"🎯 Generando para: **{mercado_nombre}** | 🤖 Usando: **{llm_seleccionado}**")
-        
-        try:
-            if llm == "todos":
-                # Modo comparación: 3 LLMs en paralelo
-                resultados = generar_con_todos(descripcion, mercado)
-                extraer_y_mostrar_resultados(resultados)
-            else:
-                # Modo normal: 1 LLM
-                generar_un_solo_llm(descripcion, mercado, llm)
-                
-        except requests.exceptions.ConnectionError:
-            st.error("❌ No se pudo conectar al servidor. ¿El backend está corriendo?")
-        except Exception as e:
-            st.error(f"❌ Error inesperado: {str(e)}")
+        with st.spinner(f"🚀 Generando campaña para {mercado_nombre}..."):
+            try:
+                if llm == "todos":
+                    resultados = generar_con_todos(descripcion, mercado)
+                    mostrar_comparacion(resultados)
+                else:
+                    resultado = llamar_api(descripcion, mercado, llm)
+                    mostrar_un_llm(resultado, llm_seleccionado)
+                    
+            except requests.exceptions.ConnectionError:
+                st.error("❌ No se pudo conectar al servidor en Render")
+            except Exception as e:
+                st.error(f"❌ Error: {str(e)}")
 
 # ==================== PIE DE PÁGINA ====================
 st.markdown("---")
