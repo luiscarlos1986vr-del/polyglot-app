@@ -1,12 +1,12 @@
-# interfaz_polyglot.py - VERSIÓN CON HILOS ADAPTADA A TU BACKEND ORIGINAL
-# No envía "tipo" porque tu backend genera todo junto
+# interfaz_polyglot.py - VERSIÓN CORREGIDA CON DEPURACIÓN
 import streamlit as st
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
+import json
 
 # ==================== CONFIGURACIÓN ====================
-API_URL = "https://polyglot-app-5crh.onrender.com"  # Tu URL de producción
+API_URL = "https://polyglot-app-5crh.onrender.com"
 
 st.set_page_config(
     page_title="Global-Gadgets | Polyglot",
@@ -14,7 +14,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# ==================== ESTILOS CSS (TUS ESTILOS ORIGINALES) ====================
+# ==================== ESTILOS CSS ====================
 st.markdown("""
 <style>
     .main-title {
@@ -131,224 +131,177 @@ with col_btn2:
     generar = st.button("✨ Generar campaña internacional ✨", type="primary", use_container_width=True)
 
 
-# ==================== FUNCIONES CON HILOS (RESPETAN TU BACKEND) ====================
+# ==================== FUNCIONES PRINCIPALES ====================
 
-def llamar_api_generar(descripcion, mercado, llm):
-    """
-    Llama a TU endpoint /generar original.
-    Tu backend recibe: descripcion_producto, mercado, llm, idioma_entrada
-    Tu backend devuelve: post, email, eslogans TODO EN UNA SOLA RESPUESTA
-    """
+def llamar_api(descripcion, mercado, llm_usar):
+    """Llama a tu API y devuelve el resultado crudo"""
     try:
         payload = {
             "descripcion_producto": descripcion,
             "mercado": mercado,
-            "llm": llm,
-            "idioma_entrada": "es"  # Español por defecto
+            "llm": llm_usar,
+            "idioma_entrada": "es"
         }
+        
+        st.write(f"📤 Enviando a {llm_usar}...")  # Debug
         
         respuesta = requests.post(
             f"{API_URL}/generar",
             json=payload,
-            timeout=30
+            timeout=60
         )
         
         if respuesta.status_code == 200:
-            return respuesta.json()
+            datos = respuesta.json()
+            st.write(f"✅ {llm_usar} respondió OK")  # Debug
+            return datos
         else:
-            return {
-                "exito": False,
-                "error": f"HTTP {respuesta.status_code}: {respuesta.text}"
-            }
+            st.write(f"❌ {llm_usar} error HTTP {respuesta.status_code}")
+            return {"exito": False, "error": f"HTTP {respuesta.status_code}"}
     except Exception as e:
+        st.write(f"❌ {llm_usar} excepción: {str(e)[:50]}")
         return {"exito": False, "error": str(e)}
 
-def generar_todos_los_llms_en_paralelo(descripcion, mercado):
-    """
-    Para el modo "Todos": llama a los 3 LLMs en paralelo usando hilos.
-    Cada llamada genera POST + EMAIL + SLOGAN para ese LLM.
-    """
+def generar_con_todos(descripcion, mercado):
+    """Genera con los 3 LLMs en paralelo"""
     llms = ["gemini", "deepseek", "mistral"]
     resultados = {}
-    tiempo_inicio = time.time()
+    
+    # Barra de progreso
+    progress_bar = st.progress(0)
+    status_text = st.empty()
     
     with ThreadPoolExecutor(max_workers=3) as executor:
         futuros = {}
-        for llm_actual in llms:
-            futuro = executor.submit(llamar_api_generar, descripcion, mercado, llm_actual)
+        for i, llm_actual in enumerate(llms):
+            futuro = executor.submit(llamar_api, descripcion, mercado, llm_actual)
             futuros[futuro] = llm_actual
         
+        completados = 0
         for futuro in as_completed(futuros):
             llm_actual = futuros[futuro]
             try:
-                resultado = futuro.result(timeout=60)
-                resultados[llm_actual.capitalize()] = resultado
+                resultado = futuro.result(timeout=70)
+                resultados[llm_actual] = resultado
             except Exception as e:
-                resultados[llm_actual.capitalize()] = {"exito": False, "error": str(e)}
+                resultados[llm_actual] = {"exito": False, "error": str(e)}
+            
+            completados += 1
+            progress_bar.progress(completados / len(llms))
+            status_text.text(f"Completado {completados}/{len(llms)}: {llm_actual}")
     
-    tiempo_total = time.time() - tiempo_inicio
-    
-    # Organizo los resultados en el formato que esperan tus funciones de visualización
-    organizado = {
-        "exito": True,
-        "contenido": {
-            "post": {},
-            "email": {},
-            "eslogans": {}
-        },
-        "tiempo_total_seg": tiempo_total
-    }
-    
-    for llm_nombre, resultado_llm in resultados.items():
-        if resultado_llm.get("exito"):
-            contenido = resultado_llm.get("contenido", {})
-            # Post
-            if "post" in contenido:
-                organizado["contenido"]["post"][llm_nombre] = {
-                    "exito": contenido["post"].get("exito", False),
-                    "respuesta": contenido["post"].get("respuesta", ""),
-                    "traduccion": contenido["post"].get("traduccion"),
-                    "tiempo_ms": contenido["post"].get("tiempo_ms", 0)
-                }
-            # Email
-            if "email" in contenido:
-                organizado["contenido"]["email"][llm_nombre] = {
-                    "exito": contenido["email"].get("exito", False),
-                    "respuesta": contenido["email"].get("respuesta", ""),
-                    "traduccion": contenido["email"].get("traduccion"),
-                    "tiempo_ms": contenido["email"].get("tiempo_ms", 0)
-                }
-            # Eslogans
-            if "eslogans" in contenido:
-                organizado["contenido"]["eslogans"][llm_nombre] = {
-                    "exito": contenido["eslogans"].get("exito", False),
-                    "respuesta": contenido["eslogans"].get("respuesta", ""),
-                    "traduccion": contenido["eslogans"].get("traduccion"),
-                    "tiempo_ms": contenido["eslogans"].get("tiempo_ms", 0)
-                }
-        else:
-            # Si el LLM falló, marco error en todos los tipos
-            for tipo in ["post", "email", "eslogans"]:
-                organizado["contenido"][tipo][llm_nombre] = {
-                    "exito": False,
-                    "error": resultado_llm.get("error", "Error desconocido")
-                }
-    
-    return organizado
+    progress_bar.empty()
+    status_text.empty()
+    return resultados
 
-def generar_un_llm(descripcion, mercado, llm):
-    """
-    Para el modo normal: llama a un solo LLM.
-    """
-    tiempo_inicio = time.time()
-    resultado = llamar_api_generar(descripcion, mercado, llm)
-    tiempo_total = time.time() - tiempo_inicio
+def extraer_y_mostrar_resultados(resultados_por_llm):
+    """Toma los resultados crudos y los muestra en formato comparativo"""
     
-    if resultado.get("exito"):
-        contenido = resultado.get("contenido", {})
-        return {
-            "exito": True,
-            "contenido": {
-                "post": contenido.get("post", {}),
-                "email": contenido.get("email", {}),
-                "slogan": contenido.get("eslogans", {})
-            },
-            "tiempo_total_seg": tiempo_total
-        }
-    else:
-        return {
-            "exito": False,
-            "error": resultado.get("error"),
-            "tiempo_total_seg": tiempo_total
-        }
-
-
-# ==================== FUNCIONES DE VISUALIZACIÓN (TUS ORIGINALES) ====================
-
-def mostrar_comparacion(resultado, mercado_nombre):
-    """Muestra los resultados de los 3 LLMs lado a lado"""
     st.markdown("---")
     st.markdown("## 🏆 Comparación de Motores de IA")
     
-    posts = resultado["contenido"]["post"]
-    color_fondo = "#d8e7f0"
-    color_borde = "#FFD700"
+    # Obtener los nombres de los LLMs que tienen datos
+    llms_presentes = list(resultados_por_llm.keys())
     
-    col1, col2, col3 = st.columns(3)
-    llms_orden = ["Deepseek", "Mistral", "Gemini"]
+    if not llms_presentes:
+        st.error("No hay resultados para mostrar")
+        return
     
-    for idx, llm_nombre in enumerate(llms_orden):
-        with [col1, col2, col3][idx]:
-            datos_post = posts.get(llm_nombre, {})
+    # Crear columnas dinámicamente
+    cols = st.columns(len(llms_presentes))
+    
+    for idx, llm_nombre in enumerate(llms_presentes):
+        with cols[idx]:
+            resultado_llm = resultados_por_llm[llm_nombre]
             
-            if datos_post.get("exito"):
+            if resultado_llm.get("exito"):
+                # Mostrar tarjeta del LLM
                 st.markdown(f"""
-                <div style="background:{color_fondo}; border-radius:16px; padding:1rem; border-left:4px solid {color_borde};">
-                    <div style="text-align:center; font-size:1.2rem; font-weight:600;">{llm_nombre}</div>
-                    <div style="text-align:center; font-size:0.8rem;">⏱️ {datos_post.get('tiempo_ms', 0)} ms</div>
+                <div style="background:#d8e7f0; border-radius:16px; padding:1rem; border-left:4px solid #FFD700; margin-bottom:1rem;">
+                    <div style="text-align:center; font-size:1.2rem; font-weight:600;">{llm_nombre.capitalize()}</div>
                 </div>
                 """, unsafe_allow_html=True)
                 
+                # Extraer contenido
+                contenido = resultado_llm.get("contenido", {})
+                
+                # Mostrar POST
                 st.markdown("#### 📱 Post")
-                with st.expander("Ver contenido", expanded=True):
-                    st.markdown("**🌐 Original:**")
-                    st.write(datos_post.get("respuesta", ""))
-                    if datos_post.get("traduccion"):
-                        st.markdown("**🇪🇸 Traducción:**")
-                        st.write(datos_post.get("traduccion"))
+                post_data = contenido.get("post", {})
+                if post_data.get("exito"):
+                    with st.expander("Ver Post", expanded=True):
+                        st.markdown("**🌐 Original:**")
+                        st.write(post_data.get("respuesta", "No hay texto"))
+                        if post_data.get("traduccion"):
+                            st.markdown("**🇪🇸 Traducción:**")
+                            st.write(post_data.get("traduccion"))
+                        st.caption(f"⏱️ {post_data.get('tiempo_ms', 0)} ms")
+                else:
+                    st.warning(f"Error en Post: {post_data.get('error', 'Desconocido')}")
                 
-                if "eslogans" in resultado["contenido"]:
-                    datos_eslogans = resultado["contenido"]["eslogans"].get(llm_nombre, {})
-                    if datos_eslogans.get("exito"):
-                        st.markdown("#### 💡 Eslogans")
-                        with st.expander("Ver contenido", expanded=True):
-                            st.write(datos_eslogans.get("respuesta", ""))
+                # Mostrar EMAIL
+                st.markdown("#### 📧 Email")
+                email_data = contenido.get("email", {})
+                if email_data.get("exito"):
+                    with st.expander("Ver Email", expanded=True):
+                        st.write(email_data.get("respuesta", "No hay texto"))
+                else:
+                    st.warning(f"Error en Email: {email_data.get('error', 'Desconocido')}")
                 
-                if "email" in resultado["contenido"]:
-                    datos_email = resultado["contenido"]["email"].get(llm_nombre, {})
-                    if datos_email.get("exito"):
-                        st.markdown("#### 📧 Email")
-                        with st.expander("Ver contenido", expanded=True):
-                            st.write(datos_email.get("respuesta", ""))
+                # Mostrar ESLÓGANES
+                st.markdown("#### 💡 Eslogans")
+                eslogans_data = contenido.get("eslogans", {})
+                if eslogans_data.get("exito"):
+                    with st.expander("Ver Eslogans", expanded=True):
+                        st.write(eslogans_data.get("respuesta", "No hay texto"))
+                else:
+                    st.warning(f"Error en Eslogans: {eslogans_data.get('error', 'Desconocido')}")
+                
             else:
-                st.markdown(f"""
-                <div style="background:#f0f0f0; border-radius:16px; padding:1rem; text-align:center;">
-                    <div style="font-size:1.2rem;">{llm_nombre}</div>
-                    <div style="color:#c00;">Error</div>
-                </div>
-                """, unsafe_allow_html=True)
+                st.error(f"❌ {llm_nombre.capitalize()} falló:\n{resultado_llm.get('error', 'Error desconocido')}")
 
-def mostrar_resultados_normales(resultado, llm_usado):
-    """Muestra resultados para un solo LLM"""
-    st.markdown(f"### Resultados generados por {llm_usado}")
+def generar_un_solo_llm(descripcion, mercado, llm):
+    """Genera con un solo LLM y muestra resultados"""
     
-    tab1, tab2, tab3 = st.tabs(["📱 Post", "📧 Email", "💡 Eslogans"])
+    with st.spinner(f"Generando con {llm}..."):
+        resultado = llamar_api(descripcion, mercado, llm)
     
-    with tab1:
-        datos = resultado["contenido"].get("post", {})
-        if datos.get("exito"):
-            st.markdown("**🌐 Original:**")
-            st.write(datos.get("respuesta", ""))
-            if datos.get("traduccion"):
-                st.markdown("**🇪🇸 Traducción:**")
-                st.write(datos.get("traduccion"))
-            st.caption(f"⏱️ {datos.get('tiempo_ms', 0)} ms")
-        else:
-            st.warning(f"Error: {datos.get('error', 'Desconocido')}")
-    
-    with tab2:
-        datos = resultado["contenido"].get("email", {})
-        if datos.get("exito"):
-            st.write(datos.get("respuesta", ""))
-        else:
-            st.warning(f"Error: {datos.get('error', 'Desconocido')}")
-    
-    with tab3:
-        datos = resultado["contenido"].get("slogan", {})
-        if datos.get("exito"):
-            st.write(datos.get("respuesta", ""))
-        else:
-            st.warning(f"Error: {datos.get('error', 'Desconocido')}")
+    if resultado.get("exito"):
+        st.success(f"✅ ¡Contenido generado exitosamente!")
+        
+        contenido = resultado.get("contenido", {})
+        
+        # Pestañas para organizar
+        tab1, tab2, tab3 = st.tabs(["📱 Post", "📧 Email", "💡 Eslogans"])
+        
+        with tab1:
+            post_data = contenido.get("post", {})
+            if post_data.get("exito"):
+                st.markdown("**🌐 Original:**")
+                st.write(post_data.get("respuesta", ""))
+                if post_data.get("traduccion"):
+                    st.markdown("---")
+                    st.markdown("**🇪🇸 Traducción:**")
+                    st.write(post_data.get("traduccion"))
+                st.caption(f"⏱️ {post_data.get('tiempo_ms', 0)} ms")
+            else:
+                st.error(f"Error: {post_data.get('error', 'Desconocido')}")
+        
+        with tab2:
+            email_data = contenido.get("email", {})
+            if email_data.get("exito"):
+                st.write(email_data.get("respuesta", ""))
+            else:
+                st.error(f"Error: {email_data.get('error', 'Desconocido')}")
+        
+        with tab3:
+            eslogans_data = contenido.get("eslogans", {})
+            if eslogans_data.get("exito"):
+                st.write(eslogans_data.get("respuesta", ""))
+            else:
+                st.error(f"Error: {eslogans_data.get('error', 'Desconocido')}")
+    else:
+        st.error(f"❌ Error: {resultado.get('error', 'Desconocido')}")
 
 
 # ==================== LÓGICA PRINCIPAL ====================
@@ -358,27 +311,21 @@ if generar:
     else:
         mercado_nombre = mercado_seleccionado.replace("🇧🇷 ", "").replace("🇯🇵 ", "").replace("🇩🇪 ", "")
         
-        with st.spinner(f"🚀 Generando contenido para {mercado_nombre} con {llm_seleccionado}..."):
-            try:
-                if llm == "todos":
-                    resultado = generar_todos_los_llms_en_paralelo(descripcion, mercado)
-                else:
-                    resultado = generar_un_llm(descripcion, mercado, llm)
+        st.info(f"🎯 Generando para: **{mercado_nombre}** | 🤖 Usando: **{llm_seleccionado}**")
+        
+        try:
+            if llm == "todos":
+                # Modo comparación: 3 LLMs en paralelo
+                resultados = generar_con_todos(descripcion, mercado)
+                extraer_y_mostrar_resultados(resultados)
+            else:
+                # Modo normal: 1 LLM
+                generar_un_solo_llm(descripcion, mercado, llm)
                 
-                if resultado.get("exito"):
-                    st.success(f"✅ ¡Campaña generada en {resultado.get('tiempo_total_seg', 0):.1f} segundos!")
-                    
-                    if llm == "todos":
-                        mostrar_comparacion(resultado, mercado_nombre)
-                    else:
-                        mostrar_resultados_normales(resultado, llm_seleccionado)
-                else:
-                    st.error(f"❌ Error: {resultado.get('error', 'Desconocido')}")
-                    
-            except requests.exceptions.ConnectionError:
-                st.error("❌ No se pudo conectar al servidor. ¿El backend está corriendo?")
-            except Exception as e:
-                st.error(f"❌ Error: {str(e)}")
+        except requests.exceptions.ConnectionError:
+            st.error("❌ No se pudo conectar al servidor. ¿El backend está corriendo?")
+        except Exception as e:
+            st.error(f"❌ Error inesperado: {str(e)}")
 
 # ==================== PIE DE PÁGINA ====================
 st.markdown("---")
